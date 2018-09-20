@@ -9,6 +9,8 @@ from matplotlib import pyplot as plt
 generate data
 return X, T
 """
+
+
 def generateData(number, scale=0.5):
     assert isinstance(number, int)
     assert number > 0
@@ -22,6 +24,8 @@ def generateData(number, scale=0.5):
 假设X为一维数组
 默认degree = 2
 """
+
+
 def transform(X, degree=2):
     assert isinstance(degree, int)
     X_T = X.transpose()
@@ -39,7 +43,7 @@ def transform(X, degree=2):
         #     features.append(functools.reduce(lambda x, y: x * y, items))
         #     print(features)
         # print(features[degree])
-    
+
     return np.asarray(features).transpose()
     # answer = [np.ones(len(X))]
     # print(X)
@@ -51,19 +55,24 @@ def fitting(X_training, T_training):
     W = np.dot(np.linalg.pinv(X_training), T_training)
     return W
 
-def fitting_with_regulation(X_training, T_training, hyperparameter = np.exp(-18)):
+
+def fitting_with_regulation(X_training, T_training, hyperparameter=np.exp(-18)):
     X_T = X_training.transpose()
     # W = np.linalg.pinv(np.dot(X_T, X_training) + np.eye(len(X_T)) * hyperparameter) @ X_T @ T_training
-    W = np.linalg.solve(np.eye(len(X_T)) * hyperparameter + np.dot(X_T, X_training), np.dot(X_T, T_training))
+    W = np.linalg.solve(np.eye(len(X_T)) * hyperparameter +
+                        np.dot(X_T, X_training), np.dot(X_T, T_training))
     return W
+
 
 def predict(X_Test, W):
     return np.dot(X_Test, W)
 
 
-degree = 9
-X_training, T_training = generateData(20)
-X_test = np.linspace(0, 1, 100)
+number_train = 20
+number_test = 100
+degree = 3
+X_training, T_training = generateData(number_train)
+X_test = np.linspace(0, 1, number_test)
 X_Train = transform(X_training, degree=degree)
 X_Test = transform(X_test, degree=degree)
 Y = np.sin(2 * np.pi * X_test)
@@ -73,23 +82,25 @@ hyperList = range(-30, 1)
 
 for hyper in hyperList:
     print("hyper = ", hyper)
-    W = fitting_with_regulation(X_Train, T_training, hyperparameter=np.exp(hyper))
-    T_test = predict(transform(X_test,degree=degree), W)
+    W = fitting_with_regulation(
+        X_Train, T_training, hyperparameter=np.exp(hyper))
+    T_test = predict(transform(X_test, degree=degree), W)
     # print(W)
     error = Y - T_test
     ans = np.mean(error @ np.transpose([error]))
     # print(hyper, ans)
     list.append(ans)
-    
+
 # plt.figure(figsize=(15, 6))
 
-bestHyper = hyperList[np.where(list==np.min(list))[0][0]]
+bestHyper = hyperList[np.where(list == np.min(list))[0][0]]
 print(bestHyper, np.min(list))
 # plt.subplot(121)
 # plt.plot(hyperList, list)
 # plt.show()
 
-W = fitting_with_regulation(X_Train, T_training, hyperparameter=np.exp(bestHyper))
+W = fitting_with_regulation(
+    X_Train, T_training, hyperparameter=np.exp(bestHyper))
 T_test = predict(X_Test, W)
 # plt.subplot(122)
 # plt.scatter(X_training, T_training, facecolor="none", edgecolor="r")
@@ -103,15 +114,21 @@ W_t = np.zeros(degree+1)
 # print(X_Train.transpose() @ X_Train @ np.transpose([W_t]))
 # print(W_t)
 # print(X_training)
+
+
 def h(X_Train, T_training, hyper, W_t):
     X_T = X_Train.transpose()
     return X_T @ X_Train @ W_t - X_T @ T_training + W_t * np.exp(hyper)
+
+
 def E(X_Train, T_training, hyper, W_t):
     W_T = np.transpose([W_t])
-    X_T = X_Train.transpose()
-    return 0.5 * np.linalg.norm(X_Train @ W_T - T_training) ** 2 + 0.5 * np.exp(hyper) * W_t @ W_T
+    # X_T = X_Train.transpose()
+    return 0.5 / number_train * (np.linalg.norm(X_Train @ W_T - T_training) ** 2 + np.exp(hyper) * W_t @ W_T)
     # return np.dot(np.dot(X_T, X_Train) + np.eye(len(X_T)) * hyper, W_t) - np.dot(X_T, T_training)
 # print(h(X_Train, T_training, bestHyper, W_t))
+
+
 def gradient_descent(X_Train, T_training, hyper, W_t, rate=0.01):
     error = E(X_Train, T_training, hyper, W_t)
     for i in range(1000000):
@@ -134,9 +151,41 @@ def gradient_descent(X_Train, T_training, hyper, W_t, rate=0.01):
             error = error0
             W_t = w
     return w
+
+
+def conjugate_gradient(X_Train, T_training, hyper, W_t):
+    X_T = X_Train.transpose()
+    b = X_T @ T_training
+    A = X_T @ X_Train + np.identity(len(X_T)) * np.exp(hyper)
+    r_0 = b - A @ W_t
+    w = W_t
+    p = r_0
+    for i in range(100000):
+        print(i)
+        alpha = np.linalg.norm(r_0) ** 2 / (np.transpose(p) @ A @ p)
+        print("alpha:", alpha)
+        w = w + alpha * p
+        print("w:", w)
+        r = r_0 - alpha * A @ p
+        # r = b - A @ w
+        print("r:", r)
+        # q = np.linalg.norm(A @ w - b) / np.linalg.norm(b)
+        if(np.linalg.norm(r) < 1e-12):
+            # if q < 1e-6:
+            break
+        beta = np.linalg.norm(r)**2 / np.linalg.norm(r_0)**2
+        print("beta:", beta)
+        p = r + beta * p
+        print("p:", p)
+        r_0 = r
+    return w
+
+
 w = gradient_descent(X_Train, T_training, bestHyper, W_t)
+w_con = conjugate_gradient(X_Train, T_training, bestHyper, W_t)
 print("W:", W)
 print("w:", w)
+print("w_con:", w_con)
 # w = np.ones(4)
 # print(h(X_Train, T_training, bestHyper, w))
 
@@ -144,8 +193,10 @@ print("w:", w)
 plt.scatter(X_training, T_training, facecolor="none", edgecolor="r")
 plt.ylim(-1.5, 1.5)
 plt.plot(X_test, Y, "g")
-plt.plot(X_test, T_test, "b")
+# plt.plot(X_test, T_test, "b")
 
 # plt.subplot(122)
 plt.plot(X_test, predict(X_Test, w), "r")
+plt.plot(X_test, predict(X_Test, w_con), "m")
+plt.plot(X_test, predict(X_Test, W), "c")
 plt.show()
