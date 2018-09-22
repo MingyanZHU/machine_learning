@@ -120,8 +120,47 @@ $$ \alpha_k = \cfrac{\bold{p_k}^T(\bold{b} - \bold{Ax_k})}{\bold{p_k}^T\bold{Ap_
 对于数据生成、求解析解（有无正则项）都是可以利用numpy中的矩阵求逆等库变相降低了算法实现的难度，因此在这里就不再赘述，下面主要讲梯度下降法和共轭梯度法的算法实现。
 
 ### 梯度下降
+此处我们利用带惩罚项的优化函数进行梯度下降法的实现。
+由梯度下降主要解决的是如式$(12)$的线性方程组的解。
 
+$$ \bold{Ax} - \bold{b} = 0 \tag{12}$$
+
+另由式$(8)$我们可以得到式$(13)$
+
+$$ J(\bold{w}) = (\bold{X'X} + \lambda\bold{I})\bold{w} - \bold{X'T}\tag{13}$$
+
+联合式$(13)$与式$(12)$我们可以有：
+$$ 
+\left\{
+         \begin{array}{lr}
+         \bold{A} = \bold{X'X} + \lambda\bold{I} &  \\
+         \bold{b} = \bold{X'T}  
+         \end{array}
+\right.\tag{14}
+$$
+进而我们实现算法如下，其中$\delta$为精度要求，通常可以设置为$\delta = 1\times10^{-6}$：
+$$ 
+\begin{array}{ll}
+rate = 0.01, k = 0 \\
+\bold{w_0} = \bold{0} \\
+\widetilde{E}(\bold{w}) = \frac{1}{2N}[(\bold{Xw} - \bold{T})'(\bold{Xw} - \bold{T}) + \lambda \bold{w'w}]\\
+J(\bold{w}) = (\bold{X'X} + \lambda\bold{I})\bold{w} - \bold{X'T} \\
+\bold{loss_0} = \widetilde{\bold{E}}(\bold{w_0})\\
+\bold{repeat:} \\
+\quad \quad \bold{w_{k+1}} = \bold{w_k} - rate * J(\bold{w_k})\\
+\quad \quad \bold{loss_{k+1}} = \widetilde{\bold{E}}(\bold{w_{k+1}})\\
+\quad \quad \bold{if} \: \: \bold{abs}(\bold{loss_{k+1}} - \bold{loss_k}) < \delta \bold{\ then \ break \ loop}\\
+\quad \quad k = k + 1\\
+\bold{end \ repeat}\\
+\end{array}
+$$
 ### 共轭梯度下降
+对于共轭梯度下降，算法实现如下，参考[wiki](https://en.wikipedia.org/wiki/Conjugate_gradient_method)实现：
+<center>
+<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/28f4e9c1591f48a96a5e9c1084b2be818fd8ea2a"/>
+</center>
+
+其中的$\bold{b}, \bold{A}$均与式$(14)$相同。
 
 
 # 四、实验结果分析
