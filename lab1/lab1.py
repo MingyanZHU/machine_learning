@@ -58,6 +58,8 @@ def fitting_with_regulation(X_training, T_training, hyperparameter=np.exp(-18)):
 def predict(X_Test, w):
     return np.dot(X_Test, w)
 
+def E_rms(x, y):
+    return np.sqrt(np.mean(np.square(x-y))) # 此处与PRML中相比差一个2^0.5的系数
 
 def h(X_Train, T_training, hyper, number_train, w_0):
     """ 优化函数的导函数 """
@@ -129,7 +131,7 @@ def conjugate_gradient(X_Train, T_training, hyper, w_0, delta=1e-6):
 
 number_train = 20  # 训练样本的数量
 number_test = 100  # 测试样本的数量
-degree = 3  # 多项式的阶数
+degree = 9  # 多项式的阶数
 X_training, T_training = generateData(number_train)
 X_test = np.linspace(0, 1, number_test)
 X_Train = transform(X_training, degree=degree)
@@ -147,23 +149,58 @@ Y = np.sin(2 * np.pi * X_test)
 # plt.legend()
 # plt.show()
 
-# hyperTestList = []
-# hyperList = range(-30, 1)
-# for hyper in hyperList:
-#     print("hyper = ", hyper)
-#     w_analytical_with_regulation = fitting_with_regulation(
-#         X_Train, T_training, hyperparameter=np.exp(hyper))
-#     T_test = predict(transform(X_test, degree=degree),
-#                      w_analytical_with_regulation)
-#     loss = Y - T_test
-#     ans = np.mean(loss @ np.transpose([loss]))
-#     hyperTestList.append(ans)
+# 用于解析解(带正则项)的实验 寻找最优的超参数
+# 经过100次实验 最终得到的最优参数为e^-7
+# anslist = []
+# for i in range(100):
+#     X_training, T_training = generateData(number_train)
+#     X_test = np.linspace(0, 1, number_test)
+#     X_Train = transform(X_training, degree=degree)
+#     X_Test = transform(X_test, degree=degree)
+#     Y = np.sin(2 * np.pi * X_test)
+#     hyperTestList = []
+#     hyperList = range(-50, 1)
+#     for hyper in hyperList:
+#         w_analytical_with_regulation = fitting_with_regulation(
+#             X_Train, T_training, hyperparameter=np.exp(hyper))
+#         T_test = predict(transform(X_test, degree=degree),
+#                         w_analytical_with_regulation)
+#         # loss = Y - T_test
+#         # ans = np.mean(loss @ np.transpose([loss]))
+#         hyperTestList.append(E_rms(T_test, Y))
+#     print(i)
+#     bestHyper = hyperList[np.where(hyperTestList == np.min(hyperTestList))[0][0]]
+#     print("bestHyper:", bestHyper, np.min(hyperTestList))
+#     anslist.append(bestHyper)
+# myset = set(anslist) #myset是另外一个列表，里面的内容是mylist里面的无重复 项
+# for item in myset:
+#     print("the %d has found %d" %(item,anslist.count(item)))
+# title = "degree:" + str(degree) + ",number_train:" + str(number_train)
+# annotate = "$\lambda = e^{" + str(bestHyper) + "}$"
+# plt.title(title)
+# plt.ylabel("$E_{RMS}$")
+# plt.xlabel("$ln \lambda$")
+# plt.annotate(annotate, xy=(-30, 0.3))
+# plt.plot(hyperList, hyperTestList, 'o-', mfc="none", mec="b", ms=5, label="Test")
+# plt.legend()
+# plt.show()
 
-# bestHyper = hyperList[np.where(hyperTestList == np.min(hyperTestList))[0][0]]
+bestHyper = -7 #此处的最佳的超参数是经过上面提到的实验中确定的
+w_analytical_with_regulation = fitting_with_regulation(
+    X_Train, T_training, hyperparameter=np.exp(bestHyper))
+T_test = predict(X_Test, w_analytical_with_regulation)
+title = "degree = " + str(degree) + ", number_train = " + str(number_train) + ", number_test = " + str(number_test)
+annotate = "$\lambda = e^{" + str(bestHyper) + "}$"
+plt.title(title)
+plt.ylim(-1.5, 1.5)
+plt.scatter(X_training, T_training, facecolor="none",
+            edgecolor="b", label="training data")
+plt.plot(X_test, T_test, "r", label="analytical with regulation")
+plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
+plt.annotate(annotate, xy=(0.3, -0.5))
+plt.legend()
+plt.show()
 
-# w_analytical_with_regulation = fitting_with_regulation(
-#     X_Train, T_training, hyperparameter=np.exp(bestHyper))
-# T_test = predict(X_Test, w_analytical_with_regulation)
 
 # w_0 = np.zeros(degree+1)
 # w_gradient = gradient_descent(X_Train, T_training, bestHyper, w_0)

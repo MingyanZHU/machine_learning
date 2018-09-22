@@ -198,6 +198,49 @@ $$
 
 我们可以看到在固定多项式阶数为9的情况下，随着样本数量逐渐增加，过拟合的现象有所解决。特别是对比左上图与右下图的差距，可以看到样本数量对于过拟合问题是有影响的。
 
+## 2、带惩罚项的解析解
+首先根据式$(6)$我们需要确定最佳的超参数$\lambda$，因此我们通过PRML中提到的根均方(RMS)误差来确定，其中RMS的定义如式$(15)$。
+$$ E_{RMS} = \sqrt{\dfrac{2E(\bold{w^*})}{N}} \tag{15}$$
+
+在这里我们抽取了100次试验中的四次将实验结果放在了下图中，这四次中恰好有三次的最优的超参数均为$\lambda = e^{-7}$。
+
+<center>
+<figure class="half">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_with_regulation/degree_9_number_20_hyper_-8.png" width="45%">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_with_regulation/degree_9_number_20_hyper_-7.png" width="45%">
+</figure>
+<figure class="half">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_with_regulation/degree_9_number_20_hyper_-7(1).png" width="45%">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_with_regulation/degree_9_number_20_hyper_-7(2).png" width="45%">
+</figure>
+</center>
+
+观察上面的四张图， 我们可以发现对于超参数$\lambda$的选择，在$(e^{-50}, e^{-30})$左右保持一种相对稳定的错误率；但是在$(e^{-30}, e^{-5})$错误率有一个明显的下降，所以下面在下面的完整100次实验中我们可以看到最佳参数的分布区间也大都在这个范围内；在大于$e^{-5}$的区间内，错误率有一个急剧的升高。
+
+完整的100次实验的数据如下表格，我们可以看到最佳的超参数范围在$(e^{-9}, e^{-6})$之间，**因此在接下来的实验中我们将选取$\bold{\lambda = e^{-7}}$作为我们剩余中使用的最佳的超参数**。
+
+<!-- 表格分割线 -->
+|||||||||||||||
+|-|-|-| ------ | -----|----|------|------|-----|-----|-|-|-|-|
+|$ln\lambda$|-25 | -22  | -17 |-14| -13| -11 |-10 |-9| -8| -7| -6| -5| -3|
+|$count$|1|1|2|4|2|5|6|11|26|29|11|1|1|
+|
+<!-- 分割线 -->
+基于我们上面选择的超参数，我们进行对照实验，测试在多项式阶数为9，训练样本数量为20个的情况下进行对照实验，其中左上的图片是没有增加惩罚项的测试结果，其余三张为增加惩罚项后的测试结果。
+
+<center>
+<figure class="half">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_without_regulation/degree_9_number_training_20_number_test_100.png" width="45%">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_with_regulation/degree_9_number_20_hyper_-7_test_2.png" width="45%">
+</figure>
+<figure class="half">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_with_regulation/degree_9_number_20_hyper_-7_test_3.png" width="45%">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_with_regulation/degree_9_number_20_hyper_-7_test_4.png" width="45%">
+</figure>
+</center>
+
+我们可以看到增加正则项的后三张图片相比没有正则项的第一张图片，过拟合的现象得到了很好的解决，**这一结果验证了增加惩罚项对于过拟合的作用，以及经过上面实验得到的超参数$\lambda$是符合我们的要求的**。
+
 # 五、结论
 
 # 六、参考文献
