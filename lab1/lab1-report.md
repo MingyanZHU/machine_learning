@@ -119,7 +119,7 @@ $$ \alpha_k = \cfrac{\bold{p_k}^T(\bold{b} - \bold{Ax_k})}{\bold{p_k}^T\bold{Ap_
 ## 算法的实现
 对于数据生成、求解析解（有无正则项）都是可以利用numpy中的矩阵求逆等库变相降低了算法实现的难度，因此在这里就不再赘述，下面主要讲梯度下降法和共轭梯度法的算法实现。
 
-### 梯度下降
+### 1、梯度下降
 此处我们利用带惩罚项的优化函数进行梯度下降法的实现。
 由梯度下降主要解决的是如式$(12)$的线性方程组的解。
 
@@ -154,7 +154,7 @@ J(\bold{w}) = (\bold{X'X} + \lambda\bold{I})\bold{w} - \bold{X'T} \\
 \bold{end \ repeat}\\
 \end{array}
 $$
-### 共轭梯度下降
+### 2、共轭梯度下降
 对于共轭梯度下降，算法实现如下，参考[wiki](https://en.wikipedia.org/wiki/Conjugate_gradient_method)实现：
 <center>
 <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/28f4e9c1591f48a96a5e9c1084b2be818fd8ea2a"/>
@@ -165,11 +165,38 @@ $$
 
 # 四、实验结果分析
 
-<center>
-<img src="https://raw.githubusercontent.com/1160300314/Marxism-Report/master/Figure_1.png" width="80%" height="80%" />
+## 1、不带惩罚项的解析解
 
-Figure 1.test
+### (1)固定训练样本的大小为10，分别使用不同多项式阶数，测试的结果如下图。
+<center>
+<figure class="half">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_without_regulation/degree_1_number_training_10_number_test_100.png" width="45%" >
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_without_regulation/degree_3_number_training_10_number_test_100.png" width="45%">
+</figure>
+<figure class="half">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_without_regulation/degree_5_number_training_10_number_test_100.png" width="45%">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_without_regulation/degree_9_number_training_10_number_test_100.png" width="45%">
+</figure>
 </center>
+
+我们可以看到在固定训练样本的大小之后，在多项式阶数为3时的拟合效果已经很好。继续提高多项式的阶数，**尤其在阶数为9的时候曲线“完美的”经过了所有的节点，这种剧烈的震荡并没有很好的拟合真实的背后的函数$sin(2\pi x)$，反而将所有噪声均很好的拟合，即表现出来一种过拟合的情况。** 
+其出现过拟合的本质原因是，在阶数过大的情况下，模型的复杂度和拟合的能力都增强，因此可以通过过大或者过小的系数来实现震荡以拟合所有的数据点，以至于甚至拟合了所有的噪声。在这里由于我们的数据样本大小只有10，所以在阶数为9的时候，其对应的系数向量$\bold{w}$恰好有唯一解，因此可以穿过所有的样本点。
+
+对于过拟合我们可以通过增加样本的数据或者通过增加惩罚项的方式来解决。增加数据集样本数量，使其超过参数向量的大小，就会在一定程度上解决过拟合问题。
+
+### (2)固定多项式阶数，使用不同数量的样本数据，测试的结果如下图。
+<center>
+<figure class="half">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_without_regulation/degree_9_number_training_10_number_test_100.png" width="45%" >
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_without_regulation/degree_9_number_training_20_number_test_100.png" width="45%">
+</figure>
+<figure class="half">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_without_regulation/degree_9_number_training_50_number_test_100.png" width="45%">
+    <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/analytical_solution_without_regulation/degree_9_number_training_100_number_test_100.png" width="45%">
+</figure>
+</center>
+
+我们可以看到在固定多项式阶数为9的情况下，随着样本数量逐渐增加，过拟合的现象有所解决。特别是对比左上图与右下图的差距，可以看到样本数量对于过拟合问题是有影响的。
 
 # 五、结论
 
