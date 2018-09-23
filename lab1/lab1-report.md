@@ -165,6 +165,8 @@ $$
 
 # 四、实验结果分析
 
+**对于下面的所有的实验，在没有特别强调的情况下，所有训练样本的噪声标准差均为0.5。**
+
 ## 1、不带惩罚项的解析解
 
 ### (1)固定训练样本的大小为10，分别使用不同多项式阶数，测试的结果如下图。
@@ -241,19 +243,316 @@ $$ E_{RMS} = \sqrt{\dfrac{2E(\bold{w^*})}{N}} \tag{15}$$
 
 我们可以看到增加正则项的后三张图片相比没有正则项的第一张图片，过拟合的现象得到了很好的解决，**这一结果验证了增加惩罚项对于过拟合的作用，以及经过上面实验得到的超参数$\lambda$是符合我们的要求的**。
 
+## 3、优化解
+在这里主要是利用梯度下降(Gradient descent)和共轭梯度法(Conjugate gradient)两种方法来求优化解。由于该问题是有解析解存在，并且在之前的实验报告部分已经列出，所以在此处直接利用上面的解析解进行对比。**此处使用的学习率固定为$rate = 0.01$，停止的精度要求为$1 \times 10 ^ {-6}$。**
+
+对比实验主要分为2个变量的对比：**多项式的阶数**和**训练样本的数量**
+。测试的结果的**迭代次数**全表如下：
+
+<center>
+
+|行号|多项式阶数|训练样本数量|梯度下降|共轭梯度|
+|:-|:-:|:-:|:-:|:-:|
+|1|3|10|47707|4|
+|2|3|20|31010|4|
+|3|3|50|19708|4|
+|4|6|10|11368|5|
+|5|6|20|8195|5|
+|6|6|50|4209|7|
+|7|9|10|28135|7|
+|8|9|20|19348|7|
+|9|9|20|2134|7|
+</center>
+
+首先在固定多项式阶数的情况下，**随着训练样本的增加，梯度下降的迭代次数均有所下降，但是对于共轭梯度迭代次数变化不大。**
+
+其次在固定训练样本的情况下，**梯度下降迭代次数的变化，对于degree = 3的情况下多于degree = 9的情况，均多于degree = 6的情况。对于共轭梯度的而言，迭代次数仍然较少。**
+
+总的来说，**对于梯度下降法，迭代次数多在10000次以上；而对于共轭梯度下降，则需要的迭代次数均不超过10次。**
+
+下面给出这些实验的数据图，如下：
+<center> 
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/gradient/degree_3_number_train_10_gradient_47707_conjugate_4.png">
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/gradient/degree_3_number_train_20_gradient_31010_conjugate_4.png">
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/gradient/degree_3_number_train_50_gradient_19708_conjugate_4.png">
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/gradient/degree_6_number_train_10_gradient_11368_conjugate_5.png">
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/gradient/degree_6_number_train_20_gradient_8195_conjugate_5.png" width="95%">
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/gradient/degree_6_number_train_50_gradient_4209_conjugate_7.png" width="95%">
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/gradient/degree_9_number_train_10_gradient_28135_conjugate_7.png" width="95%">
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/gradient/degree_9_number_train_20_gradient_19348_conjugate_7.png" width="95%">
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/lab1/gradient/degree_9_number_train_50_gradient_2134_conjugate_7.png" width="95%">
+</center>
+
+综合以上几次实验的结果，**我们可以发现对于梯度下降法，其与解析解相比拟合的效果较差，而且迭代的次数比较多；而对于共轭梯度下降，在右边的图我们可以发现，其几乎与解析解表现相同，甚至不能明显的区分二者。**
+
 # 五、结论
+- **增加训练样本的数据可以有效的解决过拟合的问题**。
+- 对于训练样本限制较多的问题，**通过增加惩罚项仍然可以有效解决过拟合问题**。
+- 对于梯度下降法和共轭梯度法而言，**梯度下降收敛速度较慢，共轭梯度法的收敛速度快；且二者相对于解析解而言，共轭梯度法的拟合效果解析解的效果更好**。
 
 # 六、参考文献
 - [Pattern Recognition and Machine Learning.](https://www.springer.com/us/book/9780387310732)
 - [Gradient descent wiki](https://en.wikipedia.org/wiki/Gradient_descent)
 - [Conjugate gradient method wiki](https://en.wikipedia.org/wiki/Conjugate_gradient_method)
+- [Shewchuk J R. An introduction to the conjugate gradient method without the agonizing pain[J]. 1994](http://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf).
 
 # 七、附录:源代码(带注释)
 
 ```python
-print("Hello world")
-
 import numpy as np
+from matplotlib import pyplot as plt
 
-np.one(10)
+
+def generateData(number, scale=0.5):
+    """ Generate training or test data.
+    Args:
+        number: data number you want which is an integer
+        scale: the variance of Gaussian diribution for noise.
+    Returns:
+        X: a one-dimensional array containing all uniformly distributed x.
+        T: sin(2 * pi * x) with Gaussian distribution noise with variance of scale. 
+    """
+    assert isinstance(number, int)
+    assert number > 0
+    assert scale > 0
+    X = np.linspace(0, 1, num=number)
+    T = np.sin(2 * np.pi * X) + np.random.normal(scale=scale, size=X.shape)
+    return X, T
+
+
+def transform(X, degree=2):
+    """
+    Transform an array to (len(X), degree + 1) matrix.
+    Args:
+        X: an ndarray.
+        degree:int, degree for polynomial.
+    Returns:
+        for example, [a b] -> [[1 a a^2] [1 b b^2]]
+    """
+    assert isinstance(degree, int)
+    assert X.ndim == 1
+    X_T = X.transpose()
+    X = np.transpose([X])
+    features = [np.ones(len(X))]
+    for i in range(0, degree):
+        features.append(np.multiply(X_T, features[i]))
+
+    return np.asarray(features).transpose()
+
+
+def fitting(X_training, T_training):
+    """ 求解析解 不带惩罚项 """
+    w_analytical_with_regulation = np.dot(
+        np.linalg.pinv(X_training), T_training)
+    return w_analytical_with_regulation
+
+
+def fitting_with_regulation(X_training, T_training, hyper=np.exp(-18)):
+    """ 求解析解 带惩罚项 """
+    X_T = X_training.transpose()
+    # w_analytical_with_regulation = np.linalg.pinv(np.dot(X_T, X_training)
+    # + np.eye(len(X_T)) * hyper) @ X_T @ T_training
+    w_analytical_with_regulation = np.linalg.solve(
+        np.eye(len(X_T)) * hyper + np.dot(X_T, X_training),
+        np.dot(X_T, T_training))
+    return w_analytical_with_regulation
+
+
+def predict(X_Test, w):
+    return np.dot(X_Test, w)
+
+
+def E_rms(x, y):
+    return np.sqrt(np.mean(np.square(x-y)))
+    # 此处与PRML中相比差一个2^0.5的系数
+
+
+def h(X_Train, T_training, hyper, number_train, w_0):
+    """ 优化函数的导函数 """
+    X_T = X_Train.transpose()
+    return (X_T @ X_Train @ w_0 - X_T @ T_training + w_0 * np.exp(hyper))
+    # return 1.0 / number_train * (X_T @ X_Train @ w_0 - X_T @ T_training
+    # + w_0 * np.exp(hyper))
+    # 此处如果增加number_train系数 会使迭代次数增多
+
+
+def E(X_Train, T_training, hyper, number_train, w_0):
+    """ 优化函数 """
+    print(w_0)
+    W_T = np.transpose([w_0])
+    temp = X_Train @ w_0 - T_training
+    # temp = np.linalg.norm(X_Train @ w_0 - T_training) ** 2
+    temp = np.transpose(temp) @ temp
+    return 0.5 / number_train * (temp + np.exp(hyper) * w_0 @ W_T)
+
+
+def gradient_descent(X_Train, T_training, hyper, w_0, rate=0.01, delta=1e-6):
+    """ 梯度下降法 
+    Args:
+        hyper:超参数，使用时以np.exp(hyper)为超参数
+        rate:学习率
+        delta:认为收敛的最小差距
+    """
+    loss = E(X_Train, T_training, hyper, len(X_Train), w_0)
+    k = 0
+    while True:
+        w_gradient = w_0 - rate * \
+            h(X_Train, T_training, hyper, len(X_Train), w_0)
+        loss0 = E(X_Train, T_training, hyper, len(X_Train), w_gradient)
+        if np.abs(loss0[0] - loss[0]) < delta:
+            break
+        else:
+            print(k)
+            k = k + 1
+            print("abs:", np.abs(loss - loss0))
+            print("loss:", loss)
+            loss = loss0
+            w_0 = w_gradient
+    return w_gradient
+
+
+def conjugate_gradient(X_Train, T_training, hyper, w_0, delta=1e-6):
+    """ 共轭梯度法 """
+    X_T = X_Train.transpose()
+    b = X_T @ T_training
+    A = X_T @ X_Train + np.identity(len(X_T)) * np.exp(hyper)
+    r_0 = b - A @ w_0
+    w_gradient = w_0
+    p = r_0
+    k = 0
+    while True:
+        print(k)
+        k = k + 1
+        alpha = np.linalg.norm(r_0) ** 2 / (np.transpose(p) @ A @ p)
+        print("alpha:", alpha)
+        w_gradient = w_gradient + alpha * p
+        print("w_gradient:", w_gradient)
+        r = r_0 - alpha * A @ p
+        # r = b - A @ w_gradient
+        print("r:", r)
+        # q = np.linalg.norm(A @ w_gradient - b) / np.linalg.norm(b)
+        if(np.linalg.norm(r) ** 2 < delta):
+            break
+        beta = np.linalg.norm(r)**2 / np.linalg.norm(r_0)**2
+        print("beta:", beta)
+        p = r + beta * p
+        print("p:", p)
+        r_0 = r
+    return w_gradient
+
+
+number_train = 50  # 训练样本的数量
+number_test = 100  # 测试样本的数量
+degree = 9  # 多项式的阶数
+X_training, T_training = generateData(number_train)
+X_test = np.linspace(0, 1, number_test)
+X_Train = transform(X_training, degree=degree)
+X_Test = transform(X_test, degree=degree)
+Y = np.sin(2 * np.pi * X_test)
+
+# 用于解析解(不带正则项)的实验
+# title = "degree = " + str(degree) + ", number_train = " + str(number_train) + ", number_test = " + str(number_test)
+# plt.title(title)
+# plt.ylim(-1.5, 1.5)
+# plt.scatter(X_training, T_training, facecolor="none",
+#             edgecolor="b", label="training data")
+# plt.plot(X_test, predict(X_Test, fitting(X_Train, T_training)), "r",
+# label="analytical solution")
+# plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
+# plt.legend()
+# plt.show()
+
+# 用于解析解(带正则项)的实验 寻找最优的超参数
+# 经过100次实验 最终得到的最优参数为e^-7
+# anslist = []
+# for i in range(100):
+#     X_training, T_training = generateData(number_train)
+#     X_test = np.linspace(0, 1, number_test)
+#     X_Train = transform(X_training, degree=degree)
+#     X_Test = transform(X_test, degree=degree)
+#     Y = np.sin(2 * np.pi * X_test)
+#     hyperTestList = []
+#     hyperList = range(-50, 1)
+#     for hyper in hyperList:
+#         w_analytical_with_regulation = fitting_with_regulation(
+#             X_Train, T_training, hyper=np.exp(hyper))
+#         T_test = predict(transform(X_test, degree=degree),
+#                         w_analytical_with_regulation)
+#         # loss = Y - T_test
+#         # ans = np.mean(loss @ np.transpose([loss]))
+#         hyperTestList.append(E_rms(T_test, Y))
+#     print(i)
+#     bestHyper = hyperList[np.where(hyperTestList ==
+#       np.min(hyperTestList))[0][0]]
+#     print("bestHyper:", bestHyper, np.min(hyperTestList))
+#     anslist.append(bestHyper)
+# myset = set(anslist)
+# for item in myset:
+#     print("the %d has found %d" %(item,anslist.count(item)))
+# title = "degree:" + str(degree) + ",number_train:" + str(number_train)
+# annotate = "$\lambda = e^{" + str(bestHyper) + "}$"
+# plt.title(title)
+# plt.ylabel("$E_{RMS}$")
+# plt.xlabel("$ln \lambda$")
+# plt.annotate(annotate, xy=(-30, 0.3))
+# plt.plot(hyperList, hyperTestList, 'o-', mfc="none", mec="b", ms=5,
+#  label="Test")
+# plt.legend()
+# plt.show()
+
+# 此处用于确认带有惩罚项的解析解的正确性实验
+# bestHyper = -7 #此处的最佳的超参数是经过上面提到的实验中确定的
+# w_analytical_with_regulation = fitting_with_regulation(
+#     X_Train, T_training, hyper=np.exp(bestHyper))
+# T_test = predict(X_Test, w_analytical_with_regulation)
+# title = "degree = " + str(degree) + ", number_train = " + str(number_train) + ", number_test = " + str(number_test)
+# annotate = "$\lambda = e^{" + str(bestHyper) + "}$"
+# plt.title(title)
+# plt.ylim(-1.5, 1.5)
+# plt.scatter(X_training, T_training, facecolor="none",
+#             edgecolor="b", label="training data")
+# plt.plot(X_test, T_test, "r", label="analytical with regulation")
+# plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
+# plt.annotate(annotate, xy=(0.3, -0.5))
+# plt.legend()
+# plt.show()
+
+
+bestHyper = -7  # 此处的最佳的超参数是经过上面提到的实验中确定的
+w_analytical_with_regulation = fitting_with_regulation(
+    X_Train, T_training, hyper=np.exp(bestHyper))
+T_test = predict(X_Test, w_analytical_with_regulation)
+w_0 = np.zeros(degree+1)
+w_gradient = gradient_descent(X_Train, T_training, bestHyper, w_0)
+w_conjugate = conjugate_gradient(X_Train, T_training, bestHyper, w_0)
+print()
+print("w_analytical_with_regulation(Analytical solution):\n",
+      w_analytical_with_regulation)
+print("w_gradient(Gradient descent):\n", w_gradient)
+print("w_conjugate(Conjugate gradient):\n", w_conjugate)
+
+title = "degree = " + str(degree) + ", number_train = " + \
+    str(number_train) + ", number_test = " + str(number_test)
+plt.figure(figsize=(15, 6))
+plt.subplot(121)
+plt.title(title)
+plt.ylim(-1.5, 1.5)
+plt.scatter(X_training, T_training, facecolor="none",
+            edgecolor="b", label="training data")
+plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
+plt.plot(X_test, T_test, "r", label="Analytical with regulation")
+plt.plot(X_test, predict(X_Test, w_gradient), "c", label="Gradient descent")
+plt.legend()
+
+plt.subplot(122)
+plt.ylim(-1.5, 1.5)
+plt.title(title)
+plt.scatter(X_training, T_training, facecolor="none",
+            edgecolor="b", label="training data")
+plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
+plt.plot(X_test, T_test, "r", label="Analytical regulation")
+plt.plot(X_test, predict(X_Test, w_conjugate), "m",
+         label="Conjugate gradient")
+plt.legend()
+plt.show()
 ```
