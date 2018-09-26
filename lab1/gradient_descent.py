@@ -2,6 +2,12 @@ import numpy as np
 
 class GradientDescent(object):
     def __init__(self, X, T, hyper, rate=0.1, delta=1e-6):
+        """ Args:
+            X, T训练集, 其中X为(number_train, degree + 1)的矩阵
+            T为(number_train, 1)的向量
+            hyper 为超参数
+            rate 为学习率, delta 为停止迭代的条件
+        """
         self.X = X
         self.T = T
         self.hyper = hyper

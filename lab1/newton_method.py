@@ -7,7 +7,6 @@ class NewtonMethond(object):
         Args:
             X, T训练集, 其中X为(number_train, degree + 1)的矩阵
             T为(number_train, 1)的向量
-            w_0:为初始化的解
         """
         self.X = X
         self.T = T

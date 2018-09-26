@@ -27,26 +27,10 @@ class ConjugateGradient(object):
             p = r + beta * p
             r_0 = r
         return w
-    
+
     def fitting_standford(self, w_0):
         w = w_0
-        r = self.b
-        rhos = [np.linalg.norm(r) ** 2]
-        for i in range(100000):
-            if i == 0:
-                p = r
-            else:
-                p = r + (rhos[i-1] / rhos[i-2]) * p
-            omega = self.A @ p
-            alpha = rhos[i-1] / (p.T @ omega)
-            w = w + alpha * p
-            r = r - alpha * omega
-            rhos.append(np.linalg.norm(r) ** 2)
-        return w
-
-    def fitting_standford2(self, w_0):
-        w = w_0
-        r = self.b -self.A @ w_0
+        r = self.b - self.A @ w_0
         M = np.linalg.inv(self.A)
         p = r
         z = M @ r
@@ -62,4 +46,3 @@ class ConjugateGradient(object):
             p = z + rho / rho_0 * p
             rho_0 = rho
         return w
-            
