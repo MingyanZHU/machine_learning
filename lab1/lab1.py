@@ -13,7 +13,8 @@ def generateData(number, scale=0.3):
         scale: the variance of Gaussian diribution for noise.
     Returns:
         X: a one-dimensional array containing all uniformly distributed x.
-        T: sin(2 * pi * x) with Gaussian distribution noise with variance of scale. 
+        T: sin(2 * pi * x) with Gaussian distribution noise with variance 
+            of scale. 
     """
     assert isinstance(number, int)
     assert number > 0
@@ -67,9 +68,9 @@ plt.figure(figsize=(20, 10))
 title = "degree = " + str(degree) + ", number_train = " + \
     str(number_train) + ", number_test = " + str(number_test)
 plt.title(title)
-plt.ylim(-1.5, 1.5)
 # 用于解析解(不带正则项)的实验
 plt.subplot(231)
+plt.ylim(-1.5, 1.5)
 plt.scatter(X_training, T_training, facecolor="none",
             edgecolor="b", label="training data")
 anaSolution = analytical_solution.AnalyticalSolution(X_Train, T_training)
@@ -81,7 +82,7 @@ plt.legend()
 
 
 # 用于解析解(带正则项)的实验 寻找最优的超参数
-# 经过100次实验 最终得到的最优参数为e^-7
+# 经过100次实验(具体的测试数据见实验报告)最终得到的最优参数为e^-7
 anaSolution = analytical_solution.AnalyticalSolution(X_Train, T_training)
 hyperTestList = []
 hyperTrainList = []
@@ -111,33 +112,31 @@ plt.legend()
 
 # 此处用于确认带有惩罚项的解析解的正确性实验
 bestHyper = -7  # 此处的最佳的超参数是经过上面提到的实验中确定的
+# 求解解析解
 anaSolution = analytical_solution.AnalyticalSolution(X_Train, T_training)
 w_analytical_with_regulation = anaSolution.fitting_with_regulation(
     np.exp(bestHyper))
-T_test = predict(X_Test, w_analytical_with_regulation)
+
+print("w_analytical_with_regulation(Analytical solution):\n",
+      w_analytical_with_regulation)
+
 annotate = "$\lambda = e^{" + str(bestHyper) + "}$"
 plt.subplot(233)
 plt.ylim(-1.5, 1.5)
 plt.scatter(X_training, T_training, facecolor="none",
             edgecolor="b", label="training data")
-plt.plot(X_test, T_test, "r", label="analytical with regulation")
+plt.plot(X_test, predict(X_Test, w_analytical_with_regulation),
+         "r", label="analytical with regulation")
 plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
 plt.annotate(annotate, xy=(0.3, -0.5))
 plt.legend()
 
 
 # 用于测试梯度下降法 并与解析解相对比
-bestHyper = -7  # 此处的最佳的超参数是经过上面提到的实验中确定的
-# 解析解求解
-anaSolution = analytical_solution.AnalyticalSolution(X_Train, T_training)
-w_analytical_with_regulation = anaSolution.fitting_with_regulation(
-    np.exp(bestHyper))
 # 梯度下降求解
 gd = gradient_descent.GradientDescent(X_Train, T_training, np.exp(bestHyper))
 w_gradient = gd.fitting(np.zeros(degree + 1))
 
-print("w_analytical_with_regulation(Analytical solution):\n",
-      w_analytical_with_regulation)
 print("w_gradient(Gradient descent):\n", w_gradient)
 
 plt.subplot(234)
@@ -152,18 +151,11 @@ plt.legend()
 
 
 # 测试共轭梯度下降 并与解析解对比
-# 解析解求解
-bestHyper = -7  # 此处的最佳的超参数是经过上面提到的实验中确定的
-anaSolution = analytical_solution.AnalyticalSolution(X_Train, T_training)
-w_analytical_with_regulation = anaSolution.fitting_with_regulation(
-    np.exp(bestHyper))
 # 共轭梯度求解
 cg = conjugate_gradient.ConjugateGradient(
     X_Train, T_training, np.exp(bestHyper))
 w_conjugate = cg.fitting(np.zeros(degree + 1))
 
-print("w_analytical_with_regulation(Analytical solution):\n",
-      w_analytical_with_regulation)
 print("w_conjugate(Conjugate gradient):\n", w_conjugate)
 
 plt.subplot(235)
@@ -179,11 +171,7 @@ plt.legend()
 
 
 # 测试牛顿法 并与解析解对比
-bestHyper = -7  # 此处的最佳的超参数是经过上面提到的实验中确定的
-anaSolution = analytical_solution.AnalyticalSolution(X_Train, T_training)
-w_analytical_with_regulation = anaSolution.fitting_with_regulation(
-    np.exp(bestHyper))
-
+# 求解牛顿法的解
 nm = newton_method.NewtonMethond(X_Train, T_training, np.exp(bestHyper))
 w_newton = nm.fitting(np.ones(degree + 1))
 
