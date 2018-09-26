@@ -19,12 +19,14 @@ class NewtonMethond(object):
         """ 
         求函数的一阶导数 即 $J(w) = (X'X + \lambda I)w - X'T$
         """
-        return np.transpose(self.X) @ self.X @ w + self.hyper * w - self.X.T @ self.T
+        return np.transpose(self.X) @ self.X @ w + self.hyper * w \
+        - self.X.T @ self.T
 
     def __second_derivative(self):
         """ 
         求函数的二阶导数的逆 即hessian矩阵的逆 """
-        return np.linalg.pinv(self.X.T @ self.X + self.hyper * np.identity(len(self.X.T[0])))
+        return np.linalg.pinv(self.X.T @ self.X + self.hyper \
+            * np.identity(len(self.X.T[0])))
 
     def fitting(self, w_0):
         """ 

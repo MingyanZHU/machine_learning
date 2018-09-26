@@ -27,7 +27,8 @@ class GradientDescent(object):
     def __derivative(self, w):
         """ 
         一阶函数求导 """
-        return np.transpose(self.X) @ self.X @ w + self.hyper * w - self.X.T @ self.T
+        return np.transpose(self.X) @ self.X @ w + self.hyper * w -\
+         self.X.T @ self.T
 
     def fitting(self, w_0):
         """ 

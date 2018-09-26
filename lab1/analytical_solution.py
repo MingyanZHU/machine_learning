@@ -13,7 +13,8 @@ class AnalyticalSolution(object):
 
     def fitting_with_regulation(self, hyper):
         """ 带惩罚项的解析解 """
-        return np.linalg.solve(np.identity(len(self.X.T)) * hyper + self.X.T @ self.X, self.X.T @ self.T)
+        return np.linalg.solve(np.identity(len(self.X.T)) * hyper + \
+        self.X.T @ self.X, self.X.T @ self.T)
     
     def E_rms(self, x, y):
         """ 根均方(RMS)误差 """

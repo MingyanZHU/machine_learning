@@ -155,6 +155,7 @@ J(\bold{w}) = (\bold{X'X} + \lambda\bold{I})\bold{w} - \bold{X'T} \\
 \end{array}
 $$
 ### 2、共轭梯度下降
+<!-- TODO 详细解释共轭梯度算法的含义 仔细阅读相应的参考文献 -->
 对于共轭梯度下降，算法实现如下，参考[wiki](https://en.wikipedia.org/wiki/Conjugate_gradient_method)实现：
 <center>
 <img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/28f4e9c1591f48a96a5e9c1084b2be818fd8ea2a"/>
@@ -162,6 +163,8 @@ $$
 
 其中的$\bold{b}, \bold{A}$均与式$(14)$相同。
 
+### 3、牛顿法
+<!-- TODO -->
 
 # 四、实验结果分析
 
@@ -297,20 +300,25 @@ $$ E_{RMS} = \sqrt{\dfrac{2E(\bold{w^*})}{N}} \tag{15}$$
 - [Shewchuk J R. An introduction to the conjugate gradient method without the agonizing pain[J]. 1994](http://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf).
 
 # 七、附录:源代码(带注释)
-
+## 主程序 `lab1.py`
 ```python
 import numpy as np
 from matplotlib import pyplot as plt
+import newton_method
+import analytical_solution
+import gradient_descent
+import conjugate_gradient
 
 
-def generateData(number, scale=0.5):
+def generateData(number, scale=0.3):
     """ Generate training or test data.
     Args:
         number: data number you want which is an integer
         scale: the variance of Gaussian diribution for noise.
     Returns:
         X: a one-dimensional array containing all uniformly distributed x.
-        T: sin(2 * pi * x) with Gaussian distribution noise with variance of scale. 
+        T: sin(2 * pi * x) with Gaussian distribution noise with variance 
+            of scale. 
     """
     assert isinstance(number, int)
     assert number > 0
@@ -340,108 +348,17 @@ def transform(X, degree=2):
     return np.asarray(features).transpose()
 
 
-def fitting(X_training, T_training):
-    """ 求解析解 不带惩罚项 """
-    w_analytical_with_regulation = np.dot(
-        np.linalg.pinv(X_training), T_training)
-    return w_analytical_with_regulation
-
-
-def fitting_with_regulation(X_training, T_training, hyper=np.exp(-18)):
-    """ 求解析解 带惩罚项 """
-    X_T = X_training.transpose()
-    # w_analytical_with_regulation = np.linalg.pinv(np.dot(X_T, X_training)
-    # + np.eye(len(X_T)) * hyper) @ X_T @ T_training
-    w_analytical_with_regulation = np.linalg.solve(
-        np.eye(len(X_T)) * hyper + np.dot(X_T, X_training),
-        np.dot(X_T, T_training))
-    return w_analytical_with_regulation
-
-
 def predict(X_Test, w):
+    """ 
+    用于拟合函数
+    Args:
+        X_Test 为 (m+1, m+1)的矩阵
+        w 为求解得到的系数向量,其维度为m
+    """
     return np.dot(X_Test, w)
 
 
-def E_rms(x, y):
-    return np.sqrt(np.mean(np.square(x-y)))
-    # 此处与PRML中相比差一个2^0.5的系数
-
-
-def h(X_Train, T_training, hyper, number_train, w_0):
-    """ 优化函数的导函数 """
-    X_T = X_Train.transpose()
-    return (X_T @ X_Train @ w_0 - X_T @ T_training + w_0 * np.exp(hyper))
-    # return 1.0 / number_train * (X_T @ X_Train @ w_0 - X_T @ T_training
-    # + w_0 * np.exp(hyper))
-    # 此处如果增加number_train系数 会使迭代次数增多
-
-
-def E(X_Train, T_training, hyper, number_train, w_0):
-    """ 优化函数 """
-    print(w_0)
-    W_T = np.transpose([w_0])
-    temp = X_Train @ w_0 - T_training
-    # temp = np.linalg.norm(X_Train @ w_0 - T_training) ** 2
-    temp = np.transpose(temp) @ temp
-    return 0.5 / number_train * (temp + np.exp(hyper) * w_0 @ W_T)
-
-
-def gradient_descent(X_Train, T_training, hyper, w_0, rate=0.01, delta=1e-6):
-    """ 梯度下降法 
-    Args:
-        hyper:超参数，使用时以np.exp(hyper)为超参数
-        rate:学习率
-        delta:认为收敛的最小差距
-    """
-    loss = E(X_Train, T_training, hyper, len(X_Train), w_0)
-    k = 0
-    while True:
-        w_gradient = w_0 - rate * \
-            h(X_Train, T_training, hyper, len(X_Train), w_0)
-        loss0 = E(X_Train, T_training, hyper, len(X_Train), w_gradient)
-        if np.abs(loss0[0] - loss[0]) < delta:
-            break
-        else:
-            print(k)
-            k = k + 1
-            print("abs:", np.abs(loss - loss0))
-            print("loss:", loss)
-            loss = loss0
-            w_0 = w_gradient
-    return w_gradient
-
-
-def conjugate_gradient(X_Train, T_training, hyper, w_0, delta=1e-6):
-    """ 共轭梯度法 """
-    X_T = X_Train.transpose()
-    b = X_T @ T_training
-    A = X_T @ X_Train + np.identity(len(X_T)) * np.exp(hyper)
-    r_0 = b - A @ w_0
-    w_gradient = w_0
-    p = r_0
-    k = 0
-    while True:
-        print(k)
-        k = k + 1
-        alpha = np.linalg.norm(r_0) ** 2 / (np.transpose(p) @ A @ p)
-        print("alpha:", alpha)
-        w_gradient = w_gradient + alpha * p
-        print("w_gradient:", w_gradient)
-        r = r_0 - alpha * A @ p
-        # r = b - A @ w_gradient
-        print("r:", r)
-        # q = np.linalg.norm(A @ w_gradient - b) / np.linalg.norm(b)
-        if(np.linalg.norm(r) ** 2 < delta):
-            break
-        beta = np.linalg.norm(r)**2 / np.linalg.norm(r_0)**2
-        print("beta:", beta)
-        p = r + beta * p
-        print("p:", p)
-        r_0 = r
-    return w_gradient
-
-
-number_train = 50  # 训练样本的数量
+number_train = 10  # 训练样本的数量
 number_test = 100  # 测试样本的数量
 degree = 9  # 多项式的阶数
 X_training, T_training = generateData(number_train)
@@ -450,109 +367,323 @@ X_Train = transform(X_training, degree=degree)
 X_Test = transform(X_test, degree=degree)
 Y = np.sin(2 * np.pi * X_test)
 
-# 用于解析解(不带正则项)的实验
-# title = "degree = " + str(degree) + ", number_train = " + str(number_train) + ", number_test = " + str(number_test)
-# plt.title(title)
-# plt.ylim(-1.5, 1.5)
-# plt.scatter(X_training, T_training, facecolor="none",
-#             edgecolor="b", label="training data")
-# plt.plot(X_test, predict(X_Test, fitting(X_Train, T_training)), "r",
-# label="analytical solution")
-# plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
-# plt.legend()
-# plt.show()
 
-# 用于解析解(带正则项)的实验 寻找最优的超参数
-# 经过100次实验 最终得到的最优参数为e^-7
-# anslist = []
-# for i in range(100):
-#     X_training, T_training = generateData(number_train)
-#     X_test = np.linspace(0, 1, number_test)
-#     X_Train = transform(X_training, degree=degree)
-#     X_Test = transform(X_test, degree=degree)
-#     Y = np.sin(2 * np.pi * X_test)
-#     hyperTestList = []
-#     hyperList = range(-50, 1)
-#     for hyper in hyperList:
-#         w_analytical_with_regulation = fitting_with_regulation(
-#             X_Train, T_training, hyper=np.exp(hyper))
-#         T_test = predict(transform(X_test, degree=degree),
-#                         w_analytical_with_regulation)
-#         # loss = Y - T_test
-#         # ans = np.mean(loss @ np.transpose([loss]))
-#         hyperTestList.append(E_rms(T_test, Y))
-#     print(i)
-#     bestHyper = hyperList[np.where(hyperTestList ==
-#       np.min(hyperTestList))[0][0]]
-#     print("bestHyper:", bestHyper, np.min(hyperTestList))
-#     anslist.append(bestHyper)
-# myset = set(anslist)
-# for item in myset:
-#     print("the %d has found %d" %(item,anslist.count(item)))
-# title = "degree:" + str(degree) + ",number_train:" + str(number_train)
-# annotate = "$\lambda = e^{" + str(bestHyper) + "}$"
-# plt.title(title)
-# plt.ylabel("$E_{RMS}$")
-# plt.xlabel("$ln \lambda$")
-# plt.annotate(annotate, xy=(-30, 0.3))
-# plt.plot(hyperList, hyperTestList, 'o-', mfc="none", mec="b", ms=5,
-#  label="Test")
-# plt.legend()
-# plt.show()
-
-# 此处用于确认带有惩罚项的解析解的正确性实验
-# bestHyper = -7 #此处的最佳的超参数是经过上面提到的实验中确定的
-# w_analytical_with_regulation = fitting_with_regulation(
-#     X_Train, T_training, hyper=np.exp(bestHyper))
-# T_test = predict(X_Test, w_analytical_with_regulation)
-# title = "degree = " + str(degree) + ", number_train = " + str(number_train) + ", number_test = " + str(number_test)
-# annotate = "$\lambda = e^{" + str(bestHyper) + "}$"
-# plt.title(title)
-# plt.ylim(-1.5, 1.5)
-# plt.scatter(X_training, T_training, facecolor="none",
-#             edgecolor="b", label="training data")
-# plt.plot(X_test, T_test, "r", label="analytical with regulation")
-# plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
-# plt.annotate(annotate, xy=(0.3, -0.5))
-# plt.legend()
-# plt.show()
-
-
-bestHyper = -7  # 此处的最佳的超参数是经过上面提到的实验中确定的
-w_analytical_with_regulation = fitting_with_regulation(
-    X_Train, T_training, hyper=np.exp(bestHyper))
-T_test = predict(X_Test, w_analytical_with_regulation)
-w_0 = np.zeros(degree+1)
-w_gradient = gradient_descent(X_Train, T_training, bestHyper, w_0)
-w_conjugate = conjugate_gradient(X_Train, T_training, bestHyper, w_0)
-print()
-print("w_analytical_with_regulation(Analytical solution):\n",
-      w_analytical_with_regulation)
-print("w_gradient(Gradient descent):\n", w_gradient)
-print("w_conjugate(Conjugate gradient):\n", w_conjugate)
-
+plt.figure(figsize=(20, 10))
 title = "degree = " + str(degree) + ", number_train = " + \
     str(number_train) + ", number_test = " + str(number_test)
-plt.figure(figsize=(15, 6))
-plt.subplot(121)
 plt.title(title)
+# 用于解析解(不带正则项)的实验
+plt.subplot(231)
+plt.ylim(-1.5, 1.5)
+plt.scatter(X_training, T_training, facecolor="none",
+            edgecolor="b", label="training data")
+anaSolution = analytical_solution.AnalyticalSolution(X_Train, T_training)
+plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
+plt.plot(X_test, predict(X_Test, anaSolution.fitting()),
+         "r", label="analytical solution")
+plt.title(title)
+plt.legend()
+
+
+# 用于解析解(带正则项)的实验 寻找最优的超参数
+# 经过100次实验(具体的测试数据见实验报告)最终得到的最优参数为e^-7
+anaSolution = analytical_solution.AnalyticalSolution(X_Train, T_training)
+hyperTestList = []
+hyperTrainList = []
+hyperList = range(-50, 1)
+for hyper in hyperList:
+    w_analytical_with_regulation = anaSolution.fitting_with_regulation(
+        np.exp(hyper))
+    T_test = predict(X_Test, w_analytical_with_regulation)
+    hyperTestList.append(anaSolution.E_rms(T_test, Y))
+    hyperTrainList.append(anaSolution.E_rms(T_training, predict(
+        transform(X_training, degree=degree), w_analytical_with_regulation)))
+bestHyper = hyperList[np.where(hyperTestList ==
+                               np.min(hyperTestList))[0][0]]
+print("bestHyper:", bestHyper, np.min(hyperTestList))
+annotate = "$\lambda = e^{" + str(bestHyper) + "}$"
+plt.subplot(232)
+plt.ylabel("$E_{RMS}$")
+plt.ylim(0, 1)
+plt.xlabel("$ln \lambda$")
+plt.annotate(annotate, xy=(-30, 0.8))
+plt.plot(hyperList, hyperTestList, 'o-', mfc="none", mec="b", ms=5,
+         label="Test")
+plt.plot(hyperList, hyperTrainList, 'o-',
+         mfc="none", mec="r", ms=5, label="Training")
+plt.legend()
+
+
+# 此处用于确认带有惩罚项的解析解的正确性实验
+bestHyper = -7  # 此处的最佳的超参数是经过上面提到的实验中确定的
+# 求解解析解
+anaSolution = analytical_solution.AnalyticalSolution(X_Train, T_training)
+w_analytical_with_regulation = anaSolution.fitting_with_regulation(
+    np.exp(bestHyper))
+
+print("w_analytical_with_regulation(Analytical solution):\n",
+      w_analytical_with_regulation)
+
+annotate = "$\lambda = e^{" + str(bestHyper) + "}$"
+plt.subplot(233)
+plt.ylim(-1.5, 1.5)
+plt.scatter(X_training, T_training, facecolor="none",
+            edgecolor="b", label="training data")
+plt.plot(X_test, predict(X_Test, w_analytical_with_regulation),
+         "r", label="analytical with regulation")
+plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
+plt.annotate(annotate, xy=(0.3, -0.5))
+plt.legend()
+
+
+# 用于测试梯度下降法 并与解析解相对比
+# 梯度下降求解
+gd = gradient_descent.GradientDescent(X_Train, T_training, np.exp(bestHyper))
+w_gradient = gd.fitting(np.zeros(degree + 1))
+
+print("w_gradient(Gradient descent):\n", w_gradient)
+
+plt.subplot(234)
 plt.ylim(-1.5, 1.5)
 plt.scatter(X_training, T_training, facecolor="none",
             edgecolor="b", label="training data")
 plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
-plt.plot(X_test, T_test, "r", label="Analytical with regulation")
+plt.plot(X_test, predict(X_Test, w_analytical_with_regulation),
+         "r", label="Analytical with regulation")
 plt.plot(X_test, predict(X_Test, w_gradient), "c", label="Gradient descent")
 plt.legend()
 
-plt.subplot(122)
+
+# 测试共轭梯度下降 并与解析解对比
+# 共轭梯度求解
+cg = conjugate_gradient.ConjugateGradient(
+    X_Train, T_training, np.exp(bestHyper))
+w_conjugate = cg.fitting(np.zeros(degree + 1))
+
+print("w_conjugate(Conjugate gradient):\n", w_conjugate)
+
+plt.subplot(235)
 plt.ylim(-1.5, 1.5)
-plt.title(title)
 plt.scatter(X_training, T_training, facecolor="none",
             edgecolor="b", label="training data")
 plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
-plt.plot(X_test, T_test, "r", label="Analytical regulation")
+plt.plot(X_test, predict(X_Test, w_analytical_with_regulation),
+         "r", label="Analytical regulation")
 plt.plot(X_test, predict(X_Test, w_conjugate), "m",
          label="Conjugate gradient")
 plt.legend()
+
+
+# 测试牛顿法 并与解析解对比
+# 求解牛顿法的解
+nm = newton_method.NewtonMethond(X_Train, T_training, np.exp(bestHyper))
+w_newton = nm.fitting(np.ones(degree + 1))
+
+print("w_analytical_with_regulation(Analytical solution):\n",
+      w_analytical_with_regulation)
+print("w_newton(Newton method):\n", w_newton)
+
+plt.subplot(236)
+plt.ylim(-1.5, 1.5)
+plt.scatter(X_training, T_training, facecolor="none",
+            edgecolor="b", label="training data")
+plt.plot(X_test, Y, "g", label="$\sin(2\pi x)$")
+plt.plot(X_test, predict(X_Test, w_analytical_with_regulation),
+         "r", label="Analytical regulation")
+plt.plot(X_test, predict(X_Test, w_newton), "k", label="Newton method")
+plt.legend()
 plt.show()
+```
+
+## 解析解 `analytical_solution.py`
+
+```python
+import numpy as np
+
+
+class AnalyticalSolution(object):
+    def __init__(self, X, T):
+        """ 求方程的解析解 """
+        self.X = X
+        self.T = T
+
+    def fitting(self):
+        """ 不带惩罚项的解析解 """
+        return np.linalg.pinv(self.X) @ self.T
+
+    def fitting_with_regulation(self, hyper):
+        """ 带惩罚项的解析解 """
+        return np.linalg.solve(np.identity(len(self.X.T)) * hyper + \
+        self.X.T @ self.X, self.X.T @ self.T)
+    
+    def E_rms(self, x, y):
+        """ 根均方(RMS)误差 """
+        return np.sqrt(np.mean(np.square(x-y)))
+```
+
+## 梯度下降法 `gradient_descent.py`
+
+```python
+import numpy as np
+
+
+class GradientDescent(object):
+    def __init__(self, X, T, hyper, rate=0.1, delta=1e-6):
+        """ Args:
+            X, T训练集, 其中X为(number_train, degree + 1)的矩阵
+            T为(number_train, 1)的向量
+            hyper 为超参数
+            rate 为学习率, delta 为停止迭代的条件
+        """
+        self.X = X
+        self.T = T
+        self.hyper = hyper
+        self.rate = rate
+        self.delta = delta
+
+    def __loss(self, w):
+        """
+        用于求解loss 在本次实验中loss的公式为
+        $E(w) = \frac{1}{2N}[(Xw - T)'(Xw - T) + \lambda w'w]$ 
+        """
+        wt = np.transpose([w])
+        temp = self.X @ w - self.T
+        return 0.5 * np.mean(temp.T @ temp + self.hyper * w @ wt)
+
+    def __derivative(self, w):
+        """ 
+        一阶函数求导 """
+        return np.transpose(self.X) @ self.X @ w + self.hyper * w -\
+         self.X.T @ self.T
+
+    def fitting(self, w_0):
+        """ 
+        用于多项式函数使用梯度下降拟合
+        Args:
+            w_0 初始解，通常以全零向量
+         """
+        loss0 = self.__loss(w_0)
+        k = 0
+        w = w_0
+        while True:
+            wt = w - self.rate * self.__derivative(w)
+            loss = self.__loss(wt)
+            if np.abs(loss - loss0) < self.delta:
+                break
+            else:
+                k = k + 1
+                # print(k) # 记录迭代次数
+                # print("loss:", loss)
+                if loss > loss0:
+                    # 当loss函数相比上次增大 学习率衰减为之前的一半
+                    self.rate *= 0.5
+                loss0 = loss
+                w = wt
+        return w
+```
+
+## 共轭梯度法 `conjugate_gradient.py`
+
+```python
+import numpy as np
+
+
+class ConjugateGradient(object):
+    def __init__(self, X, T, hyper, delta=1e-6):
+        """ 共轭梯度下降
+        Args:
+            X, T 训练集 其中X为(m+1, m+1)的矩阵 T为(N, 1)的向量
+            hyper 超参数
+            delta 迭代停止条件 """
+        self.X = X
+        self.T = T
+        self.hyper = hyper
+        self.delta = delta
+        self.A = X.T @ X + np.identity(len(X.T)) * hyper
+        # 将问题转化为 Ax = b的求解
+        # 因此将其中的A和b转为实验带求的方程的参数
+        self.b = X.T @ T
+
+    def fitting(self, w_0):
+        r_0 = self.b - self.A @ w_0
+        w = w_0
+        p = r_0
+        k = 0
+        while True:
+            k = k + 1
+            alpha = np.linalg.norm(r_0) ** 2 / (np.transpose(p) @ self.A @ p)
+            w = w + alpha * p
+            r = r_0 - alpha * self.A @ p # 当前的残差
+            # print(k, r)
+            if(np.linalg.norm(r) ** 2 < self.delta):
+                break
+            beta = np.linalg.norm(r)**2 / np.linalg.norm(r_0)**2
+            p = r + beta * p # 下次的搜索方向
+            r_0 = r
+        return w
+
+    def fitting_standford(self, w_0):
+        w = w_0
+        r = self.b - self.A @ w_0
+        M = np.linalg.inv(self.A)
+        p = r
+        z = M @ r
+        rho_0 = r.T @ z
+        for i in range(len(w_0)):
+            omega = self.A @ p
+            alpha = rho_0 / (omega @ p)
+            w = w + alpha * p
+            print(i, w)
+            r = r - alpha * omega
+            z = M @ r
+            rho = z.T @ r
+            p = z + rho / rho_0 * p
+            rho_0 = rho
+        return w
+```
+
+## 牛顿法 `newton_method.py`
+
+```python
+import numpy as np
+
+
+class NewtonMethond(object):
+    def __init__(self, X, T, hyper, delta=1e-6):
+        """ 
+        Args:
+            X, T训练集, 其中X为(number_train, degree + 1)的矩阵
+            T为(number_train, 1)的向量
+            hyper 为超参数
+            delta 为迭代停止条件
+        """
+        self.X = X
+        self.T = T
+        self.hyper = hyper
+        self.delta = delta
+
+    def __derivative(self, w):
+        """ 
+        求函数的一阶导数 即 $J(w) = (X'X + \lambda I)w - X'T$
+        """
+        return np.transpose(self.X) @ self.X @ w + self.hyper * w \
+        - self.X.T @ self.T
+
+    def __second_derivative(self):
+        """ 
+        求函数的二阶导数的逆 即hessian矩阵的逆 """
+        return np.linalg.pinv(self.X.T @ self.X + self.hyper \
+            * np.identity(len(self.X.T[0])))
+
+    def fitting(self, w_0):
+        """ 
+        用于牛顿法求解方程的解 """
+        w = w_0
+        while True:
+            gradient = self.__derivative(w) # 梯度
+            if np.linalg.norm(gradient) < self.delta:
+                break
+            wt = w - self.__second_derivative() @ gradient
+            w = wt
+        return w
 ```
