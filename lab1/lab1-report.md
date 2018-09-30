@@ -38,7 +38,7 @@
 - Python 3.6.4
 # 三、设计思想(本程序中用到的主要算法及数据结构)
 
-## 算法原理
+## <一> 算法原理
 
 ### 1、生成数据算法
 主要是利用$sin(2\pi x)$函数产生样本，其中$x$均匀分布在$[0, 1]$之间，对于每一个目标值$t=sin(2\pi x)$增加一个$0$均值，方差为$0.5$的高斯噪声。
@@ -105,10 +105,19 @@ $$ f(\bold{x_0}) \ge f(\bold{x_1}) \ge \dots$$
 因此，如果顺利我们可以得到一个 $f(\bold{x_n})$ 收敛到期望的最小值，**当然对于我们此次实验很大可能性可以收敛到最小值**。
 
 ### 5、共轭梯度法求解最优解
-共轭梯度法解决的主要是形如$\bold{Ax} = \bold{b}$的线性方程组解的问题，其中$\bold{A}$必须是对称的、正定的。
-求解的方法就是我们先猜一个解$\bold{x_0}$，然后取梯度的反方向 $\bold{p_0} = \bold{b} - \bold{Ax}$，在n维空间的基中$\bold{p_0}$要与其与的基共轭并且为初始残差。
+共轭梯度法解决的主要是形如$\bold{Ax} = \bold{b}$的线性方程组解的问题，其中$\bold{A}$必须是对称的、正定的。**大概来说，共轭梯度下降就是在解空间的每一个维度分别取求解最优解的，每一维单独去做的时候不会影响到其他维**，这与梯度下降方法，每次都选泽梯度的反方向去迭代，梯度下降不能保障每次在每个维度上都是靠近最优解的，这就是共轭梯度优于梯度下降的原因。
 
-然后对于第k步的残差 $\bold{r_k} = \bold{b} - \bold{Ax}$，$\bold{r_k}$为$\bold{x} = \bold{x_k}$时的梯度反方向。由于我们仍然需要保证 $\bold{p_k}$ 彼此共轭。因此我们通过当前的残差和之前所有的搜索方向来构建$\bold{p_k}$，得到式$(11)$
+对于第k步的残差$\bold{r_k = b - Ax_k}$，我们根据残差去构造下一步的搜索方向$\bold{p_k}$，初始时我们令$\bold{p_0 = r_0}$。然后利用$Gram-Schmidt$方法依次构造互相共轭的搜素方向$\bold{p_k}$，具体构造的时候需要先得到第k+1步的残差，即$\bold{r_{k+1} = r_k - \alpha_kAp_k}$，其中$\alpha_k$如后面的式$(11)$。
+
+根据第k+1步的残差构造下一步的搜索方向$\bold{p_{k+1} = r_{k+1} + \beta_{k+1}p_k}$，其中$\beta_{k+1} = \bold{\cfrac{r_{k+1}^Tr_{k+1}}{r_k^Tr_k}}$。
+
+然后可以得到$\bold{x_{k+1} = x_k + \alpha_kp_k}$，其中
+$$ \alpha_k = \cfrac{\bold{p_k}^T(\bold{b} - \bold{Ax_k})}{\bold{p_k}^T\bold{Ap_k}} = \cfrac{\bold{p_k}^T\bold{r_k}}{{\bold{p_k}^T\bold{Ap_k}}} \tag{11}$$
+
+
+<!-- 求解的方法就是我们先猜一个解$\bold{x_0}$，然后取梯度的反方向 $\bold{p_0} = \bold{b} - \bold{Ax}$，在n维空间的基中$\bold{p_0}$要与其与的基共轭并且为初始残差。
+
+对于第k步的残差 $\bold{r_k} = \bold{b} - \bold{Ax}$，$\bold{r_k}$为$\bold{x} = \bold{x_k}$时的梯度反方向。由于我们仍然需要保证 $\bold{p_k}$ 彼此共轭。因此我们通过当前的残差和之前所有的搜索方向来构建$\bold{p_k}$，得到式$(11)$
 
 $$ \bold{p_k} = \bold{r_k} - \sum_{i < k}\cfrac{\bold{p_i}^T\bold{Ar_k}}{\bold{p_i}^T\bold{Ap_i}}\bold{p_i}\tag{11}$$
 
@@ -116,8 +125,10 @@ $$ \bold{p_k} = \bold{r_k} - \sum_{i < k}\cfrac{\bold{p_i}^T\bold{Ar_k}}{\bold{p
 
 $$ \alpha_k = \cfrac{\bold{p_k}^T(\bold{b} - \bold{Ax_k})}{\bold{p_k}^T\bold{Ap_k}} = \cfrac{\bold{p_k}^T\bold{r_k}}{{\bold{p_k}^T\bold{Ap_k}}}$$
 
-## 算法的实现
-对于数据生成、求解析解（有无正则项）都是可以利用numpy中的矩阵求逆等库变相降低了算法实现的难度，因此在这里就不再赘述，下面主要讲梯度下降法和共轭梯度法的算法实现。
+而对于残差我们可以通过 -->
+
+## <二> 算法的实现
+对于数据生成、求解析解（有无正则项）都是可以利用`numpy`中的矩阵求逆等库变相降低了算法实现的难度，因此在这里就不再赘述，下面主要讲梯度下降法和共轭梯度法的算法实现。
 
 ### 1、梯度下降
 此处我们利用带惩罚项的优化函数进行梯度下降法的实现。
@@ -156,10 +167,27 @@ J(\bold{w}) = (\bold{X'X} + \lambda\bold{I})\bold{w} - \bold{X'T} \\
 $$
 ### 2、共轭梯度下降
 <!-- TODO 详细解释共轭梯度算法的含义 仔细阅读相应的参考文献 -->
-对于共轭梯度下降，算法实现如下，参考[wiki](https://en.wikipedia.org/wiki/Conjugate_gradient_method)实现：
-<center>
-<img src="https://wikimedia.org/api/rest_v1/media/math/render/svg/28f4e9c1591f48a96a5e9c1084b2be818fd8ea2a"/>
-</center>
+对于共轭梯度下降，算法实现如下，参考[wiki](https://en.wikipedia.org/wiki/Conjugate_gradient_method)实现，初始时取$\bold{w_0} = \left[
+\begin{matrix}
+    0 \\ 0 \\ \vdots \\ 0
+\end{matrix}
+\right]$
+$$ 
+\begin{array}{ll}
+\bold{r_0 = b - Aw_0} \\
+\bold{p_0 = r_0} \\
+k = 0\\
+\bold{repeat} \\
+\quad \quad \bold{\alpha_k = \cfrac{r^T_kr_k}{p^T_kAp_k}}\\
+\quad \quad \bold{w_{k+1} = w_k + \alpha_kp_k} \\
+\quad \quad \bold{if}\ ||\bold{r_{k+1}}|| <\delta\ \bold{then \ break\ loop}\\
+\quad \quad \bold{\beta_k = \cfrac{r_{k+1}^Tr_{k+1}}{r_k^Tr_k}}\\
+\quad \quad \bold{p_{k+1} = r_{k+1} + \beta_kp_k}\\
+\quad \quad k = k + 1\\
+\bold{end \ repeat}\\
+\bold{The\ result\ is \ w_{k+1}}
+\end{array}
+$$
 
 其中的$\bold{b}, \bold{A}$均与式$(14)$相同。
 
