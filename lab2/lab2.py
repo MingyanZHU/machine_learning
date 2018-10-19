@@ -6,38 +6,83 @@ from scipy.stats import binom
     1.首先不生成数据，利用已有的数据(如西瓜书上的例子)先进行测试
     2.尽量使用lab1中已经造好的轮子进行
  """
+
+
 def loadWaterMelonData():
-    dataSet =  np.loadtxt("./watermelon-3.3.csv",delimiter=",")
-    x = dataSet[:,1:3]
-    y = dataSet[:,3]
+    dataSet = np.loadtxt("./watermelon-3.3.csv", delimiter=",")
+    x = dataSet[:, 1:3]
+    y = dataSet[:, 3]
     return x, y
 
-def loss(x, y, beta):
+
+def lossFunc(x, y, beta):
     sum = 0
     for i in range(len(beta)):
-        sum += (-y[i] * beta @ x[i] + np.math.log(1 + np.math.exp(beta @ x[i])))
+        sum += (-y[i] * beta @ x[i] +
+                np.math.log(1 + np.math.exp(beta @ x[i])))
     return sum
+
+
 def sigmod(x, beta):
     return 1.0 / (1.0 + np.math.exp(beta @ x))
+
+
 def derivative_beta(x, y, beta):
-    m,n = x.shape
+    m, n = x.shape
     ans = np.zeros(n)
     for i in range(m):
-        temp = y[i] - (1 - sigmod(x[i], beta))
-        for j in range(n):
-            ans[j] += x[i][j] * temp
-    return -1 * ans  # TODO 看西瓜书3.30式 推导一下导数式向量还是标量
+        temp = (1 - sigmod(x[i], beta)) - y[i]
+        ans += (x[i] * temp)
+    print(ans)
+    return ans  # 西瓜书3.30式 向量
+
+
+def gradient(x, y, beta_0, rate=0.01, delta=1e-12):
+    loss0 = lossFunc(x, y, beta_0)
+    k = 0
+    beta = beta_0
+    while True:
+        beta_t = beta - rate * derivative_beta(x, y, beta)
+        loss = lossFunc(x, y, beta_t)
+        if np.abs(loss - loss0) < delta:
+            break
+        else:
+            k = k + 1
+            print(k)
+            print("loss:", loss)
+            if loss > loss0:
+                print(rate)
+                rate *= 0.5
+            loss0 = loss
+            beta = beta_t
+    return beta
+
+
+def predict(x, beta):
+    m, n = np.shape(x)
+    ans = np.zeros(m)
+
+    for i in range(m):
+        print(sigmod(x[i], beta))
+        if sigmod(x[i], beta) > 0.5:
+            ans[i] = 1
+    return ans
+
+
 x, y = loadWaterMelonData()
 print(x)
 print(y)
-m,n = np.shape(x)
-x = np.c_[np.ones(m),x]
+m, n = np.shape(x)
+x = np.c_[np.ones(m), x]
 print(x)
-beta = np.zeros(n+1)
+beta = np.ones(n+1)
 print(beta)
 print(derivative_beta(x, y, beta))
-print(loss(x,y,beta))
-
+print(lossFunc(x, y, beta))
+beta_ans = gradient(x, y, beta)
+print(beta_ans)
+print(predict(x, beta))
+print(predict(x, beta_ans))
 
 # def generateData(number, meanPos, meanNeg, scale1=0.1, scale2=0.2):
 #     y = np.random.randint(0, 2, (number, 1))
