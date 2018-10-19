@@ -3,6 +3,8 @@ from matplotlib import pyplot as plt
 from scipy.stats import binom
 
 import gradient_descent
+import gradient_descent_with_regulation
+import newton_methon
 
 """ TODO
     1.首先不生成数据，利用已有的数据(如西瓜书上的例子)先进行测试
@@ -20,9 +22,11 @@ x, y = loadWaterMelonData()
 m, n = np.shape(x)
 x = np.c_[np.ones(m), x]
 
-gd = gradient_descent.GradientDescent(x, y, np.zeros(n+1))
-ans = gd.gradient()
-print(gd.predict(ans))
+gdr = gradient_descent_with_regulation.GradientDescentWithRegulation(x, y, np.zeros(n+1), 1e-5)
+nw = newton_methon.NewtonMethod(x, y, np.zeros(n + 1), 1e-4)
+
+ans = nw.fitting()
+print(gdr.predict(ans))
 
 x_draw = np.linspace(0, 1)
 y_draw = - (ans[0] + ans[1] * x_draw) / ans[2]
