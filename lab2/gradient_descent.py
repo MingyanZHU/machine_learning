@@ -1,6 +1,6 @@
 import numpy as np
 
-
+""" 梯度下降法 """
 class GradientDescent(object):
     def __init__(self, x, y, beta_0, hyper=0, rate=0.1, delta=1e-6):
         self.x = x

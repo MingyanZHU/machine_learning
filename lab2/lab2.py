@@ -64,6 +64,9 @@ def generate_data(number, mean_pos, mean_neg, proportion_pos, scale1=0.1, scale2
 
 
 def split_data(x_sample, y_sample, test_rate=0.3):
+    """ 分开训练集与测试集
+    Args: test_rate 为默认测试集占所有样本的比例
+     """
     number = len(x_sample)
     number_test = int(number * test_rate)
     number_train = number - number_test
@@ -97,6 +100,7 @@ def load_watermelon_data():
 
 
 def accuracy(__x_test, __y_test, beta):
+    """ 计算在给定测试集上的分类准确度 """
     columns = len(__x_test)
     count = 0
     for index in range(columns):
@@ -108,6 +112,7 @@ def accuracy(__x_test, __y_test, beta):
 
 
 def draw_2_dimensions(x_sample, y_sample):
+    """ 画出二维参数的样本 """
     type1_x = []
     type1_y = []
     type2_x = []

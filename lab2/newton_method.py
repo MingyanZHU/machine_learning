@@ -1,6 +1,6 @@
 import numpy as np
 
-
+""" 牛顿法 """
 class NewtonMethod(object):
     def __init__(self, x, y, beta_0, hyper=0, delta=1e-6):
         self.x = x
@@ -22,6 +22,7 @@ class NewtonMethod(object):
         return -1 * ans + self.hyper * beta_t
 
     def __second_derivative(self, beta_t):
+        """ 求二阶导黑塞矩阵的逆 """
         ans = np.eye(self.__n) * self.hyper
         for i in range(self.__m):
             temp = self.__sigmod(beta_t @ self.x[i])
