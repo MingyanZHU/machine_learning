@@ -20,7 +20,8 @@ class GradientDescentWithRegulation(object):
         for i in range(self.__m):
             ans += (-self.y[i] * beta_t @ self.x[i] + np.log(1 +
                     np.exp(beta_t @ self.x[i])) + 0.5 * self.hyper * beta_t @ beta_t)
-        return ans
+        return ans / self.__m
+        # 此处m用于平衡loss 没有其他作用
 
     def __derivative_beta(self, beta_t):
         ans = np.zeros(self.__n)
@@ -42,8 +43,8 @@ class GradientDescentWithRegulation(object):
                 k = k + 1
                 print(k)
                 print("loss:", loss)
-                # if loss > loss0:
-                #     self.rate *= 0.5
+                if loss > loss0:
+                    self.rate *= 0.5
                 # 进行学习率的衰减 得到的结果不正确??
                 loss0 = loss
                 beta = beta_t
