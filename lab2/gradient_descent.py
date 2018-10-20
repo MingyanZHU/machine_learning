@@ -2,7 +2,7 @@ import numpy as np
 
 
 class GradientDescent(object):
-    def __init__(self, x, y, beta_0, hyper, rate=0.1, delta=1e-6):
+    def __init__(self, x, y, beta_0, hyper=0, rate=0.1, delta=1e-6):
         self.x = x
         self.y = y
         self.beta_0 = beta_0
@@ -12,8 +12,7 @@ class GradientDescent(object):
         self.__m = len(x)
         self.__n = len(x[0])  # 没有判断x是否为空
 
-    @staticmethod
-    def __sigmod(z):
+    def __sigmod(self, z):
         return 1.0 / (1.0 + np.exp(z))
 
     def __loss(self, beta_t):
@@ -46,12 +45,13 @@ class GradientDescent(object):
                 if loss > loss0:
                     self.rate *= 0.5
                 # 进行学习率的衰减 得到的结果不正确??
-                # 改好了??
+                # 修改后答案正确 原因可能为hyper取值过大
                 loss0 = loss
                 beta = beta_t
         return beta
 
     def predict(self, beta):
+        # 好像没用的函数..
         ans = np.zeros(self.__m)
         for i in range(self.__m):
             if self.__sigmod(beta @ self.x[i]) < 0.5:
