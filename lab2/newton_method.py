@@ -2,7 +2,7 @@ import numpy as np
 
 
 class NewtonMethod(object):
-    def __init__(self, x, y, beta_0, hyper, delta=1e-6):
+    def __init__(self, x, y, beta_0, hyper=0, delta=1e-6):
         self.x = x
         self.y = y
         self.beta_0 = beta_0
@@ -37,4 +37,3 @@ class NewtonMethod(object):
             beta_t = beta - self.__second_derivative(beta) @ gradient
             beta = beta_t
         return beta
-    
