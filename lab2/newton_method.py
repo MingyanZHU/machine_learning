@@ -32,7 +32,6 @@ class NewtonMethod(object):
         beta = self.beta_0
         while True:
             gradient = self.__derivative(beta)
-            print(beta)
             if np.linalg.norm(gradient) < self.delta:
                 break
             beta_t = beta - self.__second_derivative(beta) @ gradient
