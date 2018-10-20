@@ -37,3 +37,13 @@ class NewtonMethod(object):
             beta_t = beta - self.__second_derivative(beta) @ gradient
             beta = beta_t
         return beta
+    
+    def accuracy(self, x_test, y_test, beta):
+        m = len(x_test)
+        count = 0
+        for i in range(m):
+            if self.__sigmod(beta @ x_test[i]) < 0.5 and y_test[i] == 1:
+                count = count + 1
+            elif self.__sigmod(beta @ x_test[i])  > 0.5 and y_test[i] == 0:
+                count = count + 1
+        return (1.0 * count) / m
