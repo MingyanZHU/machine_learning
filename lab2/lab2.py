@@ -169,14 +169,13 @@ def draw_2_dimensions(x_sample, y_sample):
 # plt.legend()
 # plt.show()
 
-# 用于生成数据的测试
+# # 用于生成数据的测试
 # gen_lambda = 0.1  # 惩罚项系数
 # number_gen = 100  # 样本数量
 # proportion_pos_gen = 0.3  # 正例比例
 # mean_gen_pos = -0.5  # 正例基础均值
 # mean_gen_neg = 1  # 反例基础均值
-# generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen,
-#                                                        cov21=1.0, scale_pos1_bios=0.5, scale_neg2_bios=0.7)
+# generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen)
 # generating_x = np.c_[np.ones(len(generating_x)), generating_x]
 # x_train_gen, y_train_gen, x_test_gen, y_test_gen = split_data(generating_x, generating_y)
 # generating_rows, generating_columns = np.shape(x_train_gen)
@@ -218,17 +217,32 @@ def draw_2_dimensions(x_sample, y_sample):
 # plt.legend()
 # plt.show()
 
-# 用于UCI mushroom 测试
-ms = mushroom_read.MushroomProcessing()
-ms_lambda = np.exp(-8)  # mushroom 超参数
-mushroom_x, mushroom_y = ms.get_data()
-mushroom_x = np.c_[np.ones(len(mushroom_x)), mushroom_x]
-x_train, y_train, x_test, y_test = split_data(mushroom_x, mushroom_y, test_rate=0.5)
-mushroom_rows, mushroom_columns = x_train.shape
-nw_mushroom = newton_method.NewtonMethod(x_train, y_train, np.zeros(mushroom_columns), hyper=ms_lambda)
-mushroom_ans_nw = nw_mushroom.fitting()
-
+# # 用于UCI mushroom 测试
+# ms = mushroom_read.MushroomProcessing()
+# ms_lambda = np.exp(-8)  # mushroom 超参数
+# mushroom_x, mushroom_y = ms.get_data()
+# mushroom_x = np.c_[np.ones(len(mushroom_x)), mushroom_x]
+# x_train, y_train, x_test, y_test = split_data(mushroom_x, mushroom_y, test_rate=0.5)
+# mushroom_rows, mushroom_columns = x_train.shape
+# nw_mushroom = newton_method.NewtonMethod(x_train, y_train, np.zeros(mushroom_columns), hyper=ms_lambda)
+# mushroom_ans_nw = nw_mushroom.fitting()
+#
 # gd_mushroom = gradient_descent.GradientDescent(x_train, y_train, np.zeros(mushroom_columns), hyper=ms_lambda)
 # mushroom_ans_gd = gd_mushroom.fitting()
 # print("Mushrooms GD accuracy:", accuracy(x_test, y_test, mushroom_ans_gd))
-print("Mushrooms NW accuracy:", accuracy(x_test, y_test, mushroom_ans_nw))
+# print("Mushrooms NW accuracy:", accuracy(x_test, y_test, mushroom_ans_nw))
+
+# 用于UCI blood
+import blood_read
+bl = blood_read.BloodProcessing()
+bl_x, bl_y = bl.get_data()
+bl_x = np.c_[np.ones(len(bl_x)), bl_x]
+bl_x_train, bl_y_train, bl_x_test, bl_y_test = split_data(bl_x, bl_y, test_rate=0.5)
+bl_columns, bl_rows = bl_x.shape
+nw_bl = newton_method.NewtonMethod(bl_x_train, bl_y_train, np.zeros(bl_rows))
+bl_ans_nw = nw_bl.fitting()
+
+gd_bl = gradient_descent.GradientDescent(bl_x_train, bl_y_train, np.zeros(bl_rows))
+bl_ans_gd = gd_bl.fitting()
+print("GD:", accuracy(bl_x_test, bl_y_test, bl_ans_gd))
+print(accuracy(bl_x_test, bl_y_test, bl_ans_nw))
