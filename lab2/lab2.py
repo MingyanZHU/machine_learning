@@ -11,54 +11,60 @@ def sigmod(z):
     return 1.0 / (1.0 + np.exp(z))
 
 
-def generate_data(number, mean_pos, mean_neg, proportion_pos, scale1=0.1, scale2=0.2):
+def generate_2_dimension_data(number, mean_pos, mean_neg, proportion_pos, cov11=0.5, cov12=0.0, cov21=0.0, cov22=0.5
+                              , scale_pos1_bios=0.1, scale_pos2_bios=0.1, scale_neg1_bios=-0.1, scale_neg2_bios=-0.1):
     """ 
+    当条件独立的时候，以cov11 cov12 cov21 cov22构成的协方差阵为对角阵
+    1.当不满足sigma仅与类相关的条件时候，即sigma与维度和类均相关，可令scale_pos1_bios与scale_pos2_bios不相同(同理使
+    scale_neg1_bios和scale_neg2_bios不同)，即，使P(x_i|y = k) ~ N(mu_ik, sigma_ik)
+    2.当不满足朴素贝叶斯的条件时，即，使二维不相互独立，可以使协方差矩阵不为对角阵，如使cov12或cov21非0即可
     args:
         number:样本的数量
         mean_pos:正例的平均值
         mean_neg:反例的平均值
         proportion_pos:正例占样本的数量
-        scale1:正例的高斯分布的方差
-        scale2:反例的高斯分布的方差
+        cov11:为X_1的标准差的平方
+        cov22:为X_2的标准差的平方
      """
     assert (0 < proportion_pos < 1)
     x_sample = []
     y_sample = []
     number_pos = int(number * proportion_pos)
     number_neg = number - number_pos
-    mean_pos_1 = mean_pos * (np.random.random_sample() + 0.5)
-    mean_pos_2 = mean_pos * (np.random.random_sample() + 0.5)
-    mean_neg_1 = mean_neg * np.random.random_sample()
-    mean_neg_2 = mean_neg * np.random.random_sample()
-
-    # mean_pos_1 = mean_pos * 0.9
-    # mean_pos_2 = mean_pos * 1.1
-    # mean_neg_1 = mean_neg * 1.1
-    # mean_neg_2 = mean_neg * 0.9
+    # mean_pos_bios = -0.3
+    # mean_neg_bios = 0.5
 
     while True:
         if number_neg == 0 and number_pos == 0:
             break
         elif number_neg == 0:
             number_pos = number_pos - 1
-            x_sample.append([random.gauss(mean_pos_1, scale1),
-                             random.gauss(mean_pos_2, scale1)])
+            x1_temp, x2_temp = np.random.multivariate_normal(
+                [mean_pos, mean_pos], [[cov11 + scale_pos1_bios, cov12],
+                                                       [cov21, cov22 + scale_pos2_bios]], 1).T
+            x_sample.append([x1_temp[0], x2_temp[0]])
             y_sample.append(1)
         elif number_pos == 0:
             number_neg = number_neg - 1
-            x_sample.append([random.gauss(mean_neg_1, scale2),
-                             random.gauss(mean_neg_2, scale2)])
+            x1_temp, x2_temp = np.random.multivariate_normal(
+                [mean_neg, mean_neg], [[cov11 + scale_neg1_bios, cov12],
+                                                       [cov21, cov22 + scale_pos2_bios]], 1).T
+            x_sample.append([x1_temp[0], x2_temp[0]])
             y_sample.append(0)
         else:
             if np.random.randint(0, 2) == 0:
                 number_neg = number_neg - 1
-                x_sample.append([random.gauss(mean_neg_1, scale2),
-                                 random.gauss(mean_neg_2, scale2)])
+                x1_temp, x2_temp = np.random.multivariate_normal(
+                    [mean_neg, mean_neg], [[cov11 + scale_neg1_bios, cov12],
+                                                           [cov21, cov22 + scale_neg2_bios]], 1).T
+                x_sample.append([x1_temp[0], x2_temp[0]])
                 y_sample.append(0)
             else:
                 number_pos = number_pos - 1
-                x_sample.append([random.gauss(mean_pos_1, scale1),
-                                 random.gauss(mean_pos_2, scale1)])
+                x1_temp, x2_temp = np.random.multivariate_normal(
+                    [mean_pos, mean_pos], [[cov11 + scale_pos1_bios, cov12],
+                                                           [cov21, cov22 + scale_neg2_bios]], 1).T
+                x_sample.append([x1_temp[0], x2_temp[0]])
                 y_sample.append(1)
     return x_sample, np.array(y_sample)
 
@@ -129,80 +135,88 @@ def draw_2_dimensions(x_sample, y_sample):
     plt.scatter(type2_x, type2_y, marker="x", c="r", label="negative")
 
 
-# 用于西瓜书上样例的测试
-watermelon_lambda = np.exp(-4)  # 西瓜书超参数
-
-watermelon_x, watermelon_y = load_watermelon_data()
-watermelon_rows, watermelon_columns = np.shape(watermelon_x)
-watermelon_x = np.c_[np.ones(watermelon_rows), watermelon_x]
-# 使用梯度下降法
-gdr_watermelon = gradient_descent.GradientDescent(watermelon_x, watermelon_y,
-                                                  np.zeros(watermelon_columns + 1), hyper=watermelon_lambda)
-# 使用牛顿法
-nw_watermelon = newton_method.NewtonMethod(watermelon_x, watermelon_y,
-                                           np.zeros(watermelon_columns + 1), hyper=watermelon_lambda)
-# 使用梯度下降法 不包含惩罚项
-gd_watermelon = gradient_descent.GradientDescent(watermelon_x, watermelon_y, np.zeros(watermelon_columns + 1), hyper=0)
-
-ans_nw_watermelon = nw_watermelon.fitting()
-ans_gdr_watermelon = gdr_watermelon.fitting()
-ans_gd_watermelon = gd_watermelon.fitting()
-print("GDR watermelon:", ans_gdr_watermelon)
-print("GD watermelon:", ans_gd_watermelon)
-print("NW watermelon:", ans_nw_watermelon)
-
-x_draw_watermelon = np.linspace(0, 1)
-y_draw_gdr_watermelon = - (ans_gdr_watermelon[0] + ans_gdr_watermelon[1] * x_draw_watermelon) / ans_gdr_watermelon[2]
-y_draw_nw_watermelon = - (ans_nw_watermelon[0] + ans_nw_watermelon[1] * x_draw_watermelon) / ans_nw_watermelon[2]
-y_draw_gd_watermelon = - (ans_gd_watermelon[0] + ans_gd_watermelon[1] * x_draw_watermelon) / ans_gd_watermelon[2]
-
-plt.plot(x_draw_watermelon, y_draw_gdr_watermelon, label="GDR")
-plt.plot(x_draw_watermelon, y_draw_nw_watermelon, label="NW")
-plt.plot(x_draw_watermelon, y_draw_gd_watermelon, label="GD")
-draw_2_dimensions(watermelon_x, watermelon_y)
-plt.legend()
-plt.show()
+# # 用于西瓜书上样例的测试
+# watermelon_lambda = np.exp(-4)  # 西瓜书超参数
+#
+# watermelon_x, watermelon_y = load_watermelon_data()
+# watermelon_rows, watermelon_columns = np.shape(watermelon_x)
+# watermelon_x = np.c_[np.ones(watermelon_rows), watermelon_x]
+# # 使用梯度下降法
+# gdr_watermelon = gradient_descent.GradientDescent(watermelon_x, watermelon_y,
+#                                                   np.zeros(watermelon_columns + 1), hyper=watermelon_lambda)
+# # 使用牛顿法
+# nw_watermelon = newton_method.NewtonMethod(watermelon_x, watermelon_y,
+#                                            np.zeros(watermelon_columns + 1), hyper=watermelon_lambda)
+# # 使用梯度下降法 不包含惩罚项
+# gd_watermelon = gradient_descent.GradientDescent(watermelon_x, watermelon_y, np.zeros(watermelon_columns + 1), hyper=0)
+#
+# ans_nw_watermelon = nw_watermelon.fitting()
+# ans_gdr_watermelon = gdr_watermelon.fitting()
+# ans_gd_watermelon = gd_watermelon.fitting()
+# print("GDR watermelon:", ans_gdr_watermelon)
+# print("GD watermelon:", ans_gd_watermelon)
+# print("NW watermelon:", ans_nw_watermelon)
+#
+# x_draw_watermelon = np.linspace(0, 1)
+# y_draw_gdr_watermelon = - (ans_gdr_watermelon[0] + ans_gdr_watermelon[1] * x_draw_watermelon) / ans_gdr_watermelon[2]
+# y_draw_nw_watermelon = - (ans_nw_watermelon[0] + ans_nw_watermelon[1] * x_draw_watermelon) / ans_nw_watermelon[2]
+# y_draw_gd_watermelon = - (ans_gd_watermelon[0] + ans_gd_watermelon[1] * x_draw_watermelon) / ans_gd_watermelon[2]
+#
+# plt.plot(x_draw_watermelon, y_draw_gdr_watermelon, label="GDR")
+# plt.plot(x_draw_watermelon, y_draw_nw_watermelon, label="NW")
+# plt.plot(x_draw_watermelon, y_draw_gd_watermelon, label="GD")
+# draw_2_dimensions(watermelon_x, watermelon_y)
+# plt.legend()
+# plt.show()
 
 # 用于生成数据的测试
-gen_lambda = np.exp(-4)   # 惩罚项系数
-number_gen = 100    # 样本数量
-proportion_pos_gen = 0.5    # 正例比例
-mean_gen_pos = 0.1  # 正例基础均值
-mean_gen_neg = 0.8  # 反例基础均值
-generating_x, generating_y = generate_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen)
-generating_x = np.c_[np.ones(len(generating_x)), generating_x]
-x_train_gen, y_train_gen, x_test_gen, y_test_gen = split_data(generating_x, generating_y)
-generating_rows, generating_columns = np.shape(x_train_gen)
-# 使用梯度下降进行测试  包含惩罚项
-gdr_gen = gradient_descent.GradientDescent(x_train_gen, y_train_gen, np.zeros(generating_columns), hyper=gen_lambda)
-ans_gdr_gen = gdr_gen.fitting()
-# 使用梯度下降进行测试  不包含惩罚项
-gd_gen = gradient_descent.GradientDescent(x_train_gen, y_train_gen, np.zeros(generating_columns), hyper=0)
-ans_gd_gen = gd_gen.fitting()
-# 使用牛顿法进行测试
-nw_gen = newton_method.NewtonMethod(x_train_gen, y_train_gen, np.zeros(generating_columns), hyper=gen_lambda)
-ans_nw_gen = nw_gen.fitting()
-print("Generating GDR:", ans_gdr_gen)  # 梯度下降法系数
-print("Generating NW:", ans_nw_gen)   # 牛顿法系数
-print("Generating GD:", ans_gd_gen)    # 梯度下降法系数(不含惩罚项)
+# gen_lambda = 0.1  # 惩罚项系数
+# number_gen = 100  # 样本数量
+# proportion_pos_gen = 0.3  # 正例比例
+# mean_gen_pos = -0.5  # 正例基础均值
+# mean_gen_neg = 1  # 反例基础均值
+# generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen,
+#                                                        cov21=1.0, scale_pos1_bios=0.5, scale_neg2_bios=0.7)
+# generating_x = np.c_[np.ones(len(generating_x)), generating_x]
+# x_train_gen, y_train_gen, x_test_gen, y_test_gen = split_data(generating_x, generating_y)
+# generating_rows, generating_columns = np.shape(x_train_gen)
+# # 使用梯度下降进行测试  包含惩罚项
+# gdr_gen = gradient_descent.GradientDescent(x_train_gen, y_train_gen, np.zeros(generating_columns), hyper=gen_lambda)
+# ans_gdr_gen = gdr_gen.fitting()
+# # 使用梯度下降进行测试  不包含惩罚项
+# gd_gen = gradient_descent.GradientDescent(x_train_gen, y_train_gen, np.zeros(generating_columns), hyper=0)
+# ans_gd_gen = gd_gen.fitting()
+# # 使用牛顿法进行测试
+# nw_gen = newton_method.NewtonMethod(x_train_gen, y_train_gen, np.zeros(generating_columns), hyper=gen_lambda)
+# ans_nw_gen = nw_gen.fitting()
+# print("Generating GDR:", ans_gdr_gen)  # 梯度下降法系数
+# print("Generating NW:", ans_nw_gen)  # 牛顿法系数
+# print("Generating GD:", ans_gd_gen)  # 梯度下降法系数(不含惩罚项)
 
-x_draw_gen = np.linspace(-0.4, 1)
-y_draw_gdr_gen = - (ans_gdr_gen[0] + ans_gdr_gen[1] * x_draw_gen) / ans_gdr_gen[2]
-y_draw_nw_gen = - (ans_nw_gen[0] + ans_nw_gen[1] * x_draw_gen) / ans_nw_gen[2]
-y_draw_gd_gen = - (ans_gd_gen[0] + ans_gd_gen[1] * x_draw_gen) / ans_gd_gen[2]
+# x_draw_gen = np.linspace(-3, 3)
+# y_draw_gdr_gen = - (ans_gdr_gen[0] + ans_gdr_gen[1] * x_draw_gen) / ans_gdr_gen[2]
+# y_draw_nw_gen = - (ans_nw_gen[0] + ans_nw_gen[1] * x_draw_gen) / ans_nw_gen[2]
+# y_draw_gd_gen = - (ans_gd_gen[0] + ans_gd_gen[1] * x_draw_gen) / ans_gd_gen[2]
+# plt.subplot(121)
+# plt.title("Train")
+# plt.plot(x_draw_gen, y_draw_gdr_gen, label="GDR")
+# plt.plot(x_draw_gen, y_draw_nw_gen, label="NW")
+# plt.plot(x_draw_gen, y_draw_gd_gen, label="GD")
+# draw_2_dimensions(x_train_gen, y_train_gen)
+# plt.subplot(122)
+# plt.title("Test")
+# plt.plot(x_draw_gen, y_draw_gdr_gen, label="GDR")
+# plt.plot(x_draw_gen, y_draw_nw_gen, label="NW")
+# plt.plot(x_draw_gen, y_draw_gd_gen, label="GD")
+# draw_2_dimensions(x_test_gen, y_test_gen)
 
-plt.plot(x_draw_gen, y_draw_gdr_gen, label="GDR")
-plt.plot(x_draw_gen, y_draw_nw_gen, label="NW")
-plt.plot(x_draw_gen, y_draw_gd_gen, label="GD")
+# print("Generating GDR accuracy:", accuracy(x_test_gen, y_test_gen, ans_gdr_gen))
+# print("Generating NW accuracy:", accuracy(x_test_gen, y_test_gen, ans_nw_gen))
+# print("Generating GD accuracy:", accuracy(x_test_gen, y_test_gen, ans_gd_gen))
 
-print("Generating GDR accuracy:", accuracy(x_test_gen, y_test_gen, ans_gdr_gen))
-print("Generating NW accuracy:", accuracy(x_test_gen, y_test_gen, ans_nw_gen))
-print("Generating GD accuracy:", accuracy(x_test_gen, y_test_gen, ans_gd_gen))
-
-# draw_2_dimensions(generating_x, generating_y)
-draw_2_dimensions(x_test_gen, y_test_gen)
-plt.legend()
-plt.show()
+# # draw_2_dimensions(generating_x, generating_y)
+# plt.legend()
+# plt.show()
 
 # 用于UCI mushroom 测试
 ms = mushroom_read.MushroomProcessing()
@@ -214,7 +228,7 @@ mushroom_rows, mushroom_columns = x_train.shape
 nw_mushroom = newton_method.NewtonMethod(x_train, y_train, np.zeros(mushroom_columns), hyper=ms_lambda)
 mushroom_ans_nw = nw_mushroom.fitting()
 
-gd_mushroom = gradient_descent.GradientDescent(x_train, y_train, np.zeros(mushroom_columns), hyper=ms_lambda)
-mushroom_ans_gd = gd_mushroom.fitting()
-print("Mushrooms GD accuracy:", accuracy(x_test, y_test, mushroom_ans_gd))
+# gd_mushroom = gradient_descent.GradientDescent(x_train, y_train, np.zeros(mushroom_columns), hyper=ms_lambda)
+# mushroom_ans_gd = gd_mushroom.fitting()
+# print("Mushrooms GD accuracy:", accuracy(x_test, y_test, mushroom_ans_gd))
 print("Mushrooms NW accuracy:", accuracy(x_test, y_test, mushroom_ans_nw))
