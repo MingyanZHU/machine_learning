@@ -130,7 +130,7 @@ def draw_2_dimensions(x_sample, y_sample):
 
 
 # 用于西瓜书上样例的测试
-watermelon_lambda = np.exp(-10)  # 西瓜书超参数
+watermelon_lambda = np.exp(-4)  # 西瓜书超参数
 
 watermelon_x, watermelon_y = load_watermelon_data()
 watermelon_rows, watermelon_columns = np.shape(watermelon_x)
@@ -141,22 +141,30 @@ gdr_watermelon = gradient_descent.GradientDescent(watermelon_x, watermelon_y,
 # 使用牛顿法
 nw_watermelon = newton_method.NewtonMethod(watermelon_x, watermelon_y,
                                            np.zeros(watermelon_columns + 1), hyper=watermelon_lambda)
+# 使用梯度下降法 不包含惩罚项
+gd_watermelon = gradient_descent.GradientDescent(watermelon_x, watermelon_y, np.zeros(watermelon_columns + 1), hyper=0)
 
 ans_nw_watermelon = nw_watermelon.fitting()
-ans_gd_watermelon = gdr_watermelon.fitting()
+ans_gdr_watermelon = gdr_watermelon.fitting()
+ans_gd_watermelon = gd_watermelon.fitting()
+print("GDR watermelon:", ans_gdr_watermelon)
 print("GD watermelon:", ans_gd_watermelon)
 print("NW watermelon:", ans_nw_watermelon)
+
 x_draw_watermelon = np.linspace(0, 1)
-y_draw_gd_watermelon = - (ans_gd_watermelon[0] + ans_gd_watermelon[1] * x_draw_watermelon) / ans_gd_watermelon[2]
+y_draw_gdr_watermelon = - (ans_gdr_watermelon[0] + ans_gdr_watermelon[1] * x_draw_watermelon) / ans_gdr_watermelon[2]
 y_draw_nw_watermelon = - (ans_nw_watermelon[0] + ans_nw_watermelon[1] * x_draw_watermelon) / ans_nw_watermelon[2]
-plt.plot(x_draw_watermelon, y_draw_gd_watermelon, label="GD")
+y_draw_gd_watermelon = - (ans_gd_watermelon[0] + ans_gd_watermelon[1] * x_draw_watermelon) / ans_gd_watermelon[2]
+
+plt.plot(x_draw_watermelon, y_draw_gdr_watermelon, label="GDR")
 plt.plot(x_draw_watermelon, y_draw_nw_watermelon, label="NW")
+plt.plot(x_draw_watermelon, y_draw_gd_watermelon, label="GD")
 draw_2_dimensions(watermelon_x, watermelon_y)
 plt.legend()
 plt.show()
 
 # 用于生成数据的测试
-gen_lambda = np.exp(-8)   # 惩罚项系数
+gen_lambda = np.exp(-4)   # 惩罚项系数
 number_gen = 100    # 样本数量
 proportion_pos_gen = 0.5    # 正例比例
 mean_gen_pos = 0.1  # 正例基础均值
@@ -165,26 +173,34 @@ generating_x, generating_y = generate_data(number_gen, mean_gen_pos, mean_gen_ne
 generating_x = np.c_[np.ones(len(generating_x)), generating_x]
 x_train_gen, y_train_gen, x_test_gen, y_test_gen = split_data(generating_x, generating_y)
 generating_rows, generating_columns = np.shape(x_train_gen)
-# 使用梯度下降进行测试
+# 使用梯度下降进行测试  包含惩罚项
 gdr_gen = gradient_descent.GradientDescent(x_train_gen, y_train_gen, np.zeros(generating_columns), hyper=gen_lambda)
 ans_gdr_gen = gdr_gen.fitting()
+# 使用梯度下降进行测试  不包含惩罚项
+gd_gen = gradient_descent.GradientDescent(x_train_gen, y_train_gen, np.zeros(generating_columns), hyper=0)
+ans_gd_gen = gd_gen.fitting()
 # 使用牛顿法进行测试
 nw_gen = newton_method.NewtonMethod(x_train_gen, y_train_gen, np.zeros(generating_columns), hyper=gen_lambda)
 ans_nw_gen = nw_gen.fitting()
-print("Generating GD:", ans_gdr_gen)  # 梯度下降法系数
+print("Generating GDR:", ans_gdr_gen)  # 梯度下降法系数
 print("Generating NW:", ans_nw_gen)   # 牛顿法系数
+print("Generating GD:", ans_gd_gen)    # 梯度下降法系数(不含惩罚项)
 
 x_draw_gen = np.linspace(-0.4, 1)
 y_draw_gdr_gen = - (ans_gdr_gen[0] + ans_gdr_gen[1] * x_draw_gen) / ans_gdr_gen[2]
 y_draw_nw_gen = - (ans_nw_gen[0] + ans_nw_gen[1] * x_draw_gen) / ans_nw_gen[2]
+y_draw_gd_gen = - (ans_gd_gen[0] + ans_gd_gen[1] * x_draw_gen) / ans_gd_gen[2]
 
-plt.plot(x_draw_gen, y_draw_gdr_gen, label="GD")
+plt.plot(x_draw_gen, y_draw_gdr_gen, label="GDR")
 plt.plot(x_draw_gen, y_draw_nw_gen, label="NW")
+plt.plot(x_draw_gen, y_draw_gd_gen, label="GD")
 
-print("Generating GD accuracy:", accuracy(x_test_gen, y_test_gen, ans_gdr_gen))
+print("Generating GDR accuracy:", accuracy(x_test_gen, y_test_gen, ans_gdr_gen))
 print("Generating NW accuracy:", accuracy(x_test_gen, y_test_gen, ans_nw_gen))
+print("Generating GD accuracy:", accuracy(x_test_gen, y_test_gen, ans_gd_gen))
 
-draw_2_dimensions(generating_x, generating_y)
+# draw_2_dimensions(generating_x, generating_y)
+draw_2_dimensions(x_test_gen, y_test_gen)
 plt.legend()
 plt.show()
 
@@ -193,7 +209,7 @@ ms = mushroom_read.MushroomProcessing()
 ms_lambda = np.exp(-8)  # mushroom 超参数
 mushroom_x, mushroom_y = ms.get_data()
 mushroom_x = np.c_[np.ones(len(mushroom_x)), mushroom_x]
-x_train, y_train, x_test, y_test = split_data(mushroom_x, mushroom_y, test_rate=0.3)
+x_train, y_train, x_test, y_test = split_data(mushroom_x, mushroom_y, test_rate=0.5)
 mushroom_rows, mushroom_columns = x_train.shape
 nw_mushroom = newton_method.NewtonMethod(x_train, y_train, np.zeros(mushroom_columns), hyper=ms_lambda)
 mushroom_ans_nw = nw_mushroom.fitting()
