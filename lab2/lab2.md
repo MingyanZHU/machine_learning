@@ -33,7 +33,7 @@
 ## 实验环境
 - **OS**: Ubuntu 16.04.5 LTS
 - python 3.7.0
-# 三、设计思想(本程序中的用到的主要算法及数据结构)
+# 三、设计思想(本程序中用到的主要算法及数据结构)
 
 ## 1.算法原理
 <!-- TODO Logistics Regression原理描述 可以参考西瓜书相应章节-->
@@ -123,7 +123,70 @@ $$ \cfrac{\partial^2\mathcal{L}}{\partial \bold{w} \partial \bold{w^T}} = \sum\l
 <!-- 3种破坏方式，
 1.破坏方差仅与类别相关，即，使方差与类别和维度均有关系 
 2.破坏各位之间的条件独立性，即，各维之间的协方差矩阵不为对角阵
-1. 1与2均将其破坏-->
+3. 1与2均将其破坏-->
+
+## 1.利用生成数据，符合所有假设
+设置正反例比例为3:7，生成数据，训练集与测试集的比例为3:7，共生成100个测试用例，均为二维数据，超参数$\lambda = 0.1$得到的测试结果如下：
+
+三种方式的准确率均为0.9.
+
+## 2.破坏各个维度之间的条件独立性
+即，将协方差矩阵进行设置，使其不为对角阵，具体
+```python
+generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen,cov21=1)
+```
+其余条件保持不变，得到的测试结果如下
+
+准确率均为0.967
+
+## 3.破坏方差仅与类别相关，而与维度无关的条件
+即，将各个维度的方差增加不同的偏置，以达到使各个维度的方差不仅与类别相关，还与维度相关。
+具体的操作在lab2中我们使用下面的方式
+```python
+generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen,scale_pos1_bios=0.3,scale_neg1_bios=0.6)
+```
+
+其余条件保持不变，得到的结果如下：
+
+
+准确率均为0.867
+
+## 4.同时破坏2.3.两个条件
+使用下面的语句
+```python
+generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen,cov21=1，scale_pos1_bios=0.3,scale_neg1_bios=0.6)
+```
+测试的结果如下：
+
+准确率均为0.933
+
+## 5.使用UCI上数据进行测试
+
+### 实数属性类型数据
+使用的数据为钞票数据集[Banknote Dataset](http://archive.ics.uci.edu/ml/datasets/banknote+authentication)
+
+### 整数类型数据
+使用的数据为[Blood Transfusion Service Center Data Set](http://archive.ics.uci.edu/ml/datasets/Blood+Transfusion+Service+Center)
+一共有4个属性R，F，M，T.
+- R(Recency), 表示自从上次献血后经过的月数(以小数的形式给出如8.07)
+- F(Frequency),总共献血的次数(以数字形式给出，如5)
+- M(Monetary),表示总共捐献的血液数量(以cc为单位，表示为数字如250)
+- T(Time),表示从第一次献血到现在的时间(以月为单位)
+
+以及一个标签a，表示在2007年3月这位志愿者是否献血，其中1表示献血，0表示未献血。
+
+首先从文件中将数据读出，此处使用一个单独的`blood_read.py`文件进行，并测试其数据是否有缺失，得到的结果如下
+
+可以看到没有数据缺失，即我们可以直接进行处理。
+测试的结果如下：
+> GD: 0.8021390374331551
+> 
+> NW: 0.7941176470588235
+> 
+> GD: 0.8342245989304813
+> 
+> NW: 0.820855614973262
+
 # 五、结论
 
 # 六、参考文献
@@ -133,10 +196,8 @@ $$ \cfrac{\partial^2\mathcal{L}}{\partial \bold{w} \partial \bold{w^T}} = \sum\l
 - [Newton's Method, wiki](https://en.wikipedia.org/wiki/Newton%27s_method)
 # 七、附录:源代码(带注释)
 
-```python
-print("Hello world")
-
-import numpy as np
-
-np.one(10)
-```
+- 此处不再单独给出，主程序见`lab2.py`
+- 梯度下降程序见`gradient_descent.py`
+- 牛顿法程序见`newton_method.py`
+- 读取UCI献血数据见`blood_read.py`
+- 读取UCI蘑菇数据见`mushroom_read.py`，此处单独进行有关UCI中蘑菇是否有毒的测试，原因在于蘑菇的各个属性均以字符的形式给出，想使用上述方法进行处理，必然涉及到数据预处理相关问题，并且数据得到的式离散形式，这种数据的形式与我们之前所使用高斯分布推出的结论不相适合，故此处没有再使用。
