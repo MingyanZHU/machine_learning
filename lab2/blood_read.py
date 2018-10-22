@@ -11,6 +11,8 @@ class BloodProcessing(object):
         return np.array(self.x, dtype=float), np.array(self.y)
 def main():
     bd = BloodProcessing()
+    print(bd.data_set.head())
+    print(bd.data_set.isnull().sum())
     print(bd.x.head())
     print(bd.y.head())
     x, y = bd.get_data()

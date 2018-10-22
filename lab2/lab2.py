@@ -175,7 +175,7 @@ def draw_2_dimensions(x_sample, y_sample):
 # proportion_pos_gen = 0.3  # 正例比例
 # mean_gen_pos = -0.5  # 正例基础均值
 # mean_gen_neg = 1  # 反例基础均值
-# generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen)
+# generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen,cov21=1, scale_pos1_bios=0.3,scale_neg1_bios=0.6)
 # generating_x = np.c_[np.ones(len(generating_x)), generating_x]
 # x_train_gen, y_train_gen, x_test_gen, y_test_gen = split_data(generating_x, generating_y)
 # generating_rows, generating_columns = np.shape(x_train_gen)
@@ -232,17 +232,33 @@ def draw_2_dimensions(x_sample, y_sample):
 # print("Mushrooms GD accuracy:", accuracy(x_test, y_test, mushroom_ans_gd))
 # print("Mushrooms NW accuracy:", accuracy(x_test, y_test, mushroom_ans_nw))
 
-# 用于UCI blood
-import blood_read
-bl = blood_read.BloodProcessing()
-bl_x, bl_y = bl.get_data()
-bl_x = np.c_[np.ones(len(bl_x)), bl_x]
-bl_x_train, bl_y_train, bl_x_test, bl_y_test = split_data(bl_x, bl_y, test_rate=0.5)
-bl_columns, bl_rows = bl_x.shape
-nw_bl = newton_method.NewtonMethod(bl_x_train, bl_y_train, np.zeros(bl_rows))
-bl_ans_nw = nw_bl.fitting()
+# # 用于UCI blood
+# import blood_read
+# bl = blood_read.BloodProcessing()
+# bl_x, bl_y = bl.get_data()
+# bl_x = np.c_[np.ones(len(bl_x)), bl_x]
+# bl_x_train, bl_y_train, bl_x_test, bl_y_test = split_data(bl_x, bl_y, test_rate=0.5)
+# bl_columns, bl_rows = bl_x.shape
+# nw_bl = newton_method.NewtonMethod(bl_x_train, bl_y_train, np.zeros(bl_rows))
+# bl_ans_nw = nw_bl.fitting()
 
-gd_bl = gradient_descent.GradientDescent(bl_x_train, bl_y_train, np.zeros(bl_rows))
-bl_ans_gd = gd_bl.fitting()
-print("GD:", accuracy(bl_x_test, bl_y_test, bl_ans_gd))
-print(accuracy(bl_x_test, bl_y_test, bl_ans_nw))
+# gd_bl = gradient_descent.GradientDescent(bl_x_train, bl_y_train, np.zeros(bl_rows), rate=0.01)
+# bl_ans_gd = gd_bl.fitting()
+# print("GD:", accuracy(bl_x_test, bl_y_test, bl_ans_gd))
+# print(accuracy(bl_x_test, bl_y_test, bl_ans_nw))
+
+# 用于UCI bank note
+import bank_note_read
+bn = bank_note_read.BankNoteRead()
+bn_x, bn_y = bn.get_data()
+bn_x = np.c_[np.ones(len(bn_x)), bn_x]
+bn_x_train, bn_y_train, bn_x_test, bn_y_test = split_data(bn_x, bn_y)
+bn_columns, bn_rows = bn_x.shape
+nw_bn = newton_method.NewtonMethod(bn_x_train, bn_y_train, np.zeros(bn_rows))
+bn_ans_nw = nw_bn.fitting()
+
+gd_bn = gradient_descent.GradientDescent(bn_x_train, bn_y_train, np.zeros(bn_rows))
+bn_ans_gd = gd_bn.fitting()
+
+print("GD:", accuracy(bn_x_test, bn_y_test, bn_ans_gd))
+print("NW:", accuracy(bn_x_test, bn_y_test, bn_ans_nw))
