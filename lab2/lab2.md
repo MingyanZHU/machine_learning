@@ -95,24 +95,28 @@ $$ l(\bold{w}) = \sum\limits_{l}\left(Y^l\bold{w^TX} - ln(1 + exp(\bold{w^TX}))\
 $$ \mathcal{L}(\bold{w}) = \sum\limits_{l}\left(-Y^l\bold{w^TX} + ln(1 + exp(\bold{w^TX}))\right) \tag{12}$$
 
 式$(12)$是关于$\bold{w}$的高阶可导连续凸函数[2]，根据凸优化的理论，在这里我们可以用梯度下降法、牛顿法等求解其最优解，在算法实现方面详述。
-<!-- $$\bold{w} = 
-\left[
-\begin{matrix}
-    ln \\ w_1 \\ \vdots \\ w_m
-\end{matrix}
-\right],
-\bold{T} = 
-\left[
-\begin{matrix}
-   t_1 \\ t_2 \\ \vdots \\ t_N 
-\end{matrix}
-\right]$$ -->
+
+为了避免过拟合现象，我们仿照lab1的经验，对于式$(12)$增加惩罚项，其中$\lambda$为超参数：
+
+$$ \mathcal{L}(\bold{w}) = \frac{\lambda}{2}\bold{w^Tw} + \sum\limits_{l}\left(-Y^l\bold{w^TX} + ln(1 + exp(\bold{w^TX}))\right) \tag{13}$$
 ## 2.算法的实现
 <!-- TODO logistics Regression实现的两种方式 利用梯度下降和牛顿法进行优化 -->
+算法实现部分，此处选择使用梯度下降法实现以及使用牛顿法进行优化。
 ### 2.1 梯度下降实现
+根据Lab1的经验，其实对于梯度下降法的使用没有什么变化，只是将优化的函数做了一下修改，所以我们可以得到其一阶导数，然后在$t+1$轮得到的迭代式子如下，其中$\alpha$为学习率:
+$$ \bold{w^{t+1}} = \bold{w^t} - \alpha\cfrac{\partial \mathcal{L}}{\partial \bold{w}}(\bold{w^t})$$
 
+$$ \cfrac{\partial \mathcal{L}}{\partial \bold{w}} = - \sum\limits_{i=1}^lX_i\left(Y_i - \cfrac{exp(\bold{w^TX})}{1+exp(\bold{w^TX})}\right)$$
+这种直接将式$(13)$求导进行迭代的方式，存在在数据特别多(即$l$特别大)的情况下，有可能导致上溢出发生，基于此，我们将式$(13)$归一化，防止其溢出，得到式$(14)$:
+
+$$ \mathcal{L}(\bold{w}) = \frac{\lambda}{2l}\bold{w^Tw} + \frac{1}{l} \sum\limits_{l}\left(-Y^l\bold{w^TX} + ln(1 + exp(\bold{w^TX}))\right) \tag{14}$$
+
+然后再进行迭代，就可以避免上溢出的现象。
 ### 2.2 牛顿法实现
+与梯度下降法实现类似，此处我们有在$t+1$轮迭代的式子如下:
+$$ \bold{w^{t+1}} = \bold{w^t} - \left(\cfrac{\partial^2\mathcal{L}}{\partial \bold{w} \partial \bold{w^T}}\right)^{-1}\cfrac{\partial \mathcal{L}}{\partial \bold{w}}$$
 
+$$ \cfrac{\partial^2\mathcal{L}}{\partial \bold{w} \partial \bold{w^T}} = \sum\limits_{i=1}^l\left(X_iX_i^T\ \cfrac{exp(\bold{w^TX})}{1+exp(\bold{w^TX})}\ \cfrac{1}{1+exp(\bold{w^TX})}\right)$$
 # 四、实验结果分析
 <!-- 实验结果分析 主要在于对比实验和UCI数据的实验 对比实验更改不同的均值与方差
 以及破坏Naive Bayes的条件 对实验的影响 -->
