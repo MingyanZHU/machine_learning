@@ -106,17 +106,17 @@ $$ \mathcal{L}(\bold{w}) = \frac{\lambda}{2}\bold{w^Tw} + \sum\limits_{l}\left(-
 根据Lab1的经验，其实对于梯度下降法的使用没有什么变化，只是将优化的函数做了一下修改，所以我们可以得到其一阶导数，然后在$t+1$轮得到的迭代式子如下，其中$\alpha$为学习率:
 $$ \bold{w^{t+1}} = \bold{w^t} - \alpha\cfrac{\partial \mathcal{L}}{\partial \bold{w}}(\bold{w^t})$$
 
-$$ \cfrac{\partial \mathcal{L}}{\partial \bold{w}} = - \sum\limits_{i=1}^lX_i\left(Y_i - \cfrac{exp(\bold{w^TX})}{1+exp(\bold{w^TX})}\right)$$
+$$ \dfrac{\partial \mathcal{L}}{\partial \bold{w}} = - \sum\limits_{i=1}^lX_i\left(Y_i - \cfrac{exp(\bold{w^TX})}{1+exp(\bold{w^TX})}\right)$$
 这种直接将式$(13)$求导进行迭代的方式，存在在数据特别多(即$l$特别大)的情况下，有可能导致上溢出发生，基于此，我们将式$(13)$归一化，防止其溢出，得到式$(14)$:
 
-$$ \mathcal{L}(\bold{w}) = \frac{\lambda}{2l}\bold{w^Tw} + \frac{1}{l} \sum\limits_{l}\left(-Y^l\bold{w^TX} + ln(1 + exp(\bold{w^TX}))\right) \tag{14}$$
+$$ \mathcal{L}(\bold{w}) = \dfrac{\lambda}{2l}\bold{w^Tw} + \dfrac{1}{l} \sum\limits_{l}\left(-Y^l\bold{w^TX} + ln(1 + exp(\bold{w^TX}))\right) \tag{14}$$
 
 然后再进行迭代，就可以避免上溢出的现象。
 ### 2.2 牛顿法实现
 与梯度下降法实现类似，此处我们有在$t+1$轮迭代的式子如下:
-$$ \bold{w^{t+1}} = \bold{w^t} - \left(\cfrac{\partial^2\mathcal{L}}{\partial \bold{w} \partial \bold{w^T}}\right)^{-1}\cfrac{\partial \mathcal{L}}{\partial \bold{w}}$$
+$$ \bold{w^{t+1}} = \bold{w^t} - \left(\cfrac{\partial^2\mathcal{L}}{\partial \bold{w} \partial \bold{w^T}}\right)^{-1}\dfrac{\partial \mathcal{L}}{\partial \bold{w}}$$
 
-$$ \cfrac{\partial^2\mathcal{L}}{\partial \bold{w} \partial \bold{w^T}} = \sum\limits_{i=1}^l\left(X_iX_i^T\ \cfrac{exp(\bold{w^TX})}{1+exp(\bold{w^TX})}\ \cfrac{1}{1+exp(\bold{w^TX})}\right)$$
+$$ \cfrac{\partial^2a\mathcal{L}}{\partial \bold{w} \partial \bold{w^T}} = \sum\limits_{i=1}^l\left(X_iX_i^T\ \cfrac{exp(\bold{w^TX})}{1+exp(\bold{w^TX})}\ \cfrac{1}{1+exp(\bold{w^TX})}\right)$$
 # 四、实验结果分析
 <!-- 实验结果分析 主要在于对比实验和UCI数据的实验 对比实验更改不同的均值与方差
 以及破坏Naive Bayes的条件 对实验的影响 -->
@@ -127,77 +127,112 @@ $$ \cfrac{\partial^2\mathcal{L}}{\partial \bold{w} \partial \bold{w^T}} = \sum\l
 
 ## 1.利用生成数据，符合所有假设
 设置正反例比例为3:7，生成数据，训练集与测试集的比例为3:7，共生成100个测试用例，均为二维数据，超参数$\lambda = 0.1$得到的测试结果如下：
-
-三种方式的准确率均为0.9.
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab2/100_train_test_0.3_0.3.png">
+左侧为训练集，右侧为测试集，三种方式的准确率均为0.9.
 
 ## 2.破坏各个维度之间的条件独立性
 即，将协方差矩阵进行设置，使其不为对角阵，具体
 ```python
-generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen,cov21=1)
+generating_x, generating_y = generate_2_dimension_data(number_gen,
+mean_gen_pos, mean_gen_neg, proportion_pos_gen,cov21=1)
 ```
 其余条件保持不变，得到的测试结果如下
-
-准确率均为0.967
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab2/100_train_test_0.3_0.3_scale_break.png">
+牛顿法、梯度下降(带或不带正则项)准确率均为0.967
 
 ## 3.破坏方差仅与类别相关，而与维度无关的条件
 即，将各个维度的方差增加不同的偏置，以达到使各个维度的方差不仅与类别相关，还与维度相关。
 具体的操作在lab2中我们使用下面的方式
 ```python
-generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen,scale_pos1_bios=0.3,scale_neg1_bios=0.6)
+generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, 
+mean_gen_neg, proportion_pos_gen,scale_pos1_bios=0.3,scale_neg1_bios=0.6)
 ```
 
 其余条件保持不变，得到的结果如下：
-
-
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab2/100_train_test_0.3_0.3_scale_break_3.png">
 准确率均为0.867
 
 ## 4.同时破坏2.3.两个条件
 使用下面的语句
 ```python
-generating_x, generating_y = generate_2_dimension_data(number_gen, mean_gen_pos, mean_gen_neg, proportion_pos_gen,cov21=1，scale_pos1_bios=0.3,scale_neg1_bios=0.6)
+generating_x, generating_y = generate_2_dimension_data(
+    number_gen,mean_gen_pos, mean_gen_neg, proportion_pos_gen,cov21=1，
+    scale_pos1_bios=0.3,scale_neg1_bios=0.6)
 ```
 测试的结果如下：
-
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab2/100_train_test_0.3_0.3_scale_break_both.png">
 准确率均为0.933
 
+**经过上面4种对比实验，分别对于条件满足和不满足的3种情况，我们可以看到对于两种方法得到的最优解是十分接近的，并且准确率也十分接近(以上仅列出较少的测试结果)，在实验时经过多次测试得到的结果，可以看出梯度下降法(带不带正则项)与牛顿法的准确率都十分接近。**
 ## 5.使用UCI上数据进行测试
 
-### 实数属性类型数据
 使用的数据为钞票数据集[Banknote Dataset](http://archive.ics.uci.edu/ml/datasets/banknote+authentication)
 
-### 整数类型数据
-使用的数据为[Blood Transfusion Service Center Data Set](http://archive.ics.uci.edu/ml/datasets/Blood+Transfusion+Service+Center)
-一共有4个属性R，F，M，T.
-- R(Recency), 表示自从上次献血后经过的月数(以小数的形式给出如8.07)
-- F(Frequency),总共献血的次数(以数字形式给出，如5)
-- M(Monetary),表示总共捐献的血液数量(以cc为单位，表示为数字如250)
-- T(Time),表示从第一次献血到现在的时间(以月为单位)
+这是从纸币鉴别过程中的图像里提取的数据，用来预测钞票的真伪的数据集。该数据集中含有1372个样本，每个样本由5个数值型变量构成，4个输入变量和1个输出变量。小波变换工具用于从图像中提取特征。这是一个二元分类问题。
 
-以及一个标签a，表示在2007年3月这位志愿者是否献血，其中1表示献血，0表示未献血。
+每一行的5个(列)变量含义如下：
 
-首先从文件中将数据读出，此处使用一个单独的`blood_read.py`文件进行，并测试其数据是否有缺失，得到的结果如下
+第一列：图像经小波变换后的方差(variance)(连续值)；
 
-可以看到没有数据缺失，即我们可以直接进行处理。
-测试的结果如下：
-> GD: 0.8021390374331551
-> 
-> NW: 0.7941176470588235
-> 
-> GD: 0.8342245989304813
-> 
-> NW: 0.820855614973262
+第二列：图像经小波变换后的偏态(skewness)(连续值)；
+
+第三列：图像经小波变换后的峰度(curtosis)(连续值)；
+
+第四列：图像的熵(entropy)(连续值)；
+
+第五列：钞票所属的类别a(整数，0或1)。
+
+首先将文件从`data_banknote_authentication.csv`中读出(使用`bank_note_read.py`)，并对数据是否有缺失进行统计，统计的结果如下：
+```
+   variance  skewness  kurtosis  entropy  a
+0   3.62160    8.6661   -2.8073 -0.44699  0
+1   4.54590    8.1674   -2.4586 -1.46210  0
+2   3.86600   -2.6383    1.9242  0.10645  0
+3   3.45660    9.5228   -4.0112 -3.59440  0
+4   0.32924   -4.4552    4.5718 -0.98880  0
+
+variance    0
+skewness    0
+kurtosis    0
+entropy     0
+a           0
+```
+
+其中上半部分为整个数据的前5行数据，后半部分为对于数据中为`null`的数据进行统计，可以看到对于5列属性来说，**均没有缺失数据的现象**，故可以直接进行训练。
+
+此处选择的训练集与测试集的比例为3:7，超参数$\lambda$选择0.1
+
+测试结果如下：
+<center>
+
+测试|GD Accuracy|NW Accuracy|
+|-|-|-|
+|1|0.995|0.995
+|2|0.998|0.998
+|3|0.985|0.985
+|4|0.99 |0.99
+|5|0.987|0.987
+
+</center>
 
 # 五、结论
+- 对于梯度下降法，是否使用惩罚项对于测试结果的影响不大。
+- 牛顿法与梯度下降法都可以得到很好的结果，其中梯度下降法的迭代收敛的速度较慢。
+- 对于进行数学推导时使用的假设(包括朴素贝叶斯假设和$\sigma$仅与类别相关与维度无关)，当打破假设时，得到的分类结果仍然较好，这与[Domingos&Pazzani, 1996]中的阐述相符合。
 
 # 六、参考文献
 - [Christopher Bishop. Pattern Recognition and Machine Learning.](https://www.springer.com/us/book/9780387310732)
 
-- [周志华 著. 机器学习, 北京: 清华大学出版社, 2016.1.](https://cs.nju.edu.cn/zhouzh/zhouzh.files/publication/MLbook2016.htm)
+- [周志华 著. 机器学习, 北京: 清华大学出版社, 2016.1](https://cs.nju.edu.cn/zhouzh/zhouzh.files/publication/MLbook2016.htm)
 - [Newton's Method, wiki](https://en.wikipedia.org/wiki/Newton%27s_method)
+- [Blood Transfusion Service Center Data Set. UCI](http://archive.ics.uci.edu/ml/datasets/Blood+Transfusion+Service+Center)
+- [Banknote Dataset. UCI](http://archive.ics.uci.edu/ml/datasets/banknote+authentication)
+- [Mushroom Dataset. UCI](https://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/)
+- [Domingos, P. & M. Pazzani (1996). Beyond independence: Conditions for the optimality of the simple Bayesian classifier. In L. Saitta (Ed.), Proceedings of the Thirteenth International Conference on Machine Learning (pp. 105–112). San Francisco, CA: Morgan Kaufmann.](https://www.ics.uci.edu/~pazzani/Publications/mlc96-pedro.pdf)
 # 七、附录:源代码(带注释)
 
 - 此处不再单独给出，主程序见`lab2.py`
 - 梯度下降程序见`gradient_descent.py`
 - 牛顿法程序见`newton_method.py`
-- 读取UCI献血数据见`blood_read.py`
-- 读取UCI蘑菇数据见`mushroom_read.py`，此处单独进行有关UCI中蘑菇是否有毒的测试，原因在于蘑菇的各个属性均以字符的形式给出，想使用上述方法进行处理，必然涉及到数据预处理相关问题，并且数据得到的式离散形式，这种数据的形式与我们之前所使用高斯分布推出的结论不相适合，故此处没有再使用。
+- 读取UCI钞票数据集见`bank_note_read.py`
+- 读取UCI献血数据见`blood_read.py`，读取UCI蘑菇数据见`mushroom_read.py`。此处单独进行有关UCI中蘑菇是否有毒的测试以及是否进行献血的测试，原因在于其各个属性均以离散的形式给出，想使用上述方法进行处理，必然涉及到数据预处理相关问题，这种数据的形式与我们之前所使用高斯分布推出的结论不相适合，故此处没有再单独进行阐述，**总的来说，虽然在连续的属性上推出上述结论，但是在离散的比那里上work仍然很好，正确率同样很高**。
