@@ -40,12 +40,12 @@ def generate_data(means, number, k):
     """ 生成2维数据 """
     assert len(means) == k
     assert len(number) == k
-    cov = [[0.3, 0], [0, 0.3]]
+    cov = [[0.1, 0], [0, 0.1]]
     data = []
     for i in range(k):
         for j in range(number[i]):
             temp_x1, temp_x2 = np.random.multivariate_normal(
-                [means[i]*np.random.random_sample(), means[i]*np.random.random_sample()], cov
+                [means[i], means[i]], cov
             )
             data.append([temp_x1, temp_x2])
     return np.array(data)
@@ -78,17 +78,34 @@ def k_means(training_x, k, delta=1e-6):
         else:
             break
 
-        print(times)
-        times = times + 1
-        for i in range(k):
-            print(mu[i])
+        # print(times)
+        # times = times + 1
+        # for i in range(k):
+        #     print(mu[i])
     return mu, c
 
 k = 3
-means = [2, -2, 0]
-number = [30, 10, 20]
+means = [4, -4, 0]
+number = [100, 100, 100]
 data = generate_data(means, number, k)
 mu, c = k_means(data, k)
+# ans = []
+# TODO k-means 可能会陷入局部最优解 所以如何选择初始簇中心点
+# 参考 https://blog.csdn.net/zhihaoma/article/details/48649489?utm_source=blogxgwz0
+# 可以选择彼此距离尽可能远的k个点 作为初始簇中心
+# for times in range(200):
+#     print(times)
+#     mu, c = k_means(data, k)
+#     summ = 0
+#     for i in range(k):
+#         temp = [euclidean_distance(np.array(c[i][j]), mu[i]) for j in range(len(c[i]))]
+#         summ += np.sum(temp)
+#     print(summ)
+#     ans.append(summ)
+# print(ans)
+# print(np.min(ans))
+# print(np.max(ans))
+
 # watermelon = watermelon_data()
 # mu, c = k_means(watermelon, k)
 plt.scatter(mu[:,0], mu[:,1], facecolor="none", edgecolor="b", label="center")
