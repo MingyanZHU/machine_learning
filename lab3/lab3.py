@@ -99,3 +99,4 @@ plt.show()
 # mu_iris, c_iris = gmm_iris.predict()
 # print(gmm_iris.sample_assignments)
 # print(iris.accuracy(gmm_iris.sample_assignments))
+# TODO 问题在于如何将各个类别的序号统一 如对于某种花 可能使用的编号分别是1和2 即使其表示同一种花
