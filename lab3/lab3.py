@@ -91,3 +91,11 @@ plt.scatter(mu_gmm[:, 0], mu_gmm[:, 1], facecolor="none", edgecolor="r", label="
 plt.legend()
 
 plt.show()
+
+# import iris_read
+# iris = iris_read.IrisProcessing()
+# iris_data = iris.get_data()
+# gmm_iris = gaussian_mixture_model.GaussianMixtureModel(iris_data)
+# mu_iris, c_iris = gmm_iris.predict()
+# print(gmm_iris.sample_assignments)
+# print(iris.accuracy(gmm_iris.sample_assignments))

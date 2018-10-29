@@ -15,7 +15,7 @@ class GaussianMixtureModel(object):
         self.data_rows, self.data_columns = self.data.shape
         self.__alpha = np.ones(self.k) * (1.0 / self.k)
         self.__mu, self.__sigma = self.__init_params()
-        self.__sample_assignments = None
+        self.sample_assignments = None
         self.c = collections.defaultdict(list)
         self.__last_alpha = self.__alpha
         self.__last_mu = self.__mu
@@ -59,9 +59,9 @@ class GaussianMixtureModel(object):
         weighted_likelihoods = self.__likelihoods() * self.__alpha    # (m,k)
         sum_likelihoods = np.expand_dims(np.sum(weighted_likelihoods, axis=1), axis=1)  # (m,1)
         self.__gamma = weighted_likelihoods / sum_likelihoods    # (m,k)
-        self.__sample_assignments = self.__gamma.argmax(axis=1)    # (m,)
+        self.sample_assignments = self.__gamma.argmax(axis=1)    # (m,)
         for i in range(self.data_rows):
-            self.c[self.__sample_assignments[i]].append(self.data[i].tolist())
+            self.c[self.sample_assignments[i]].append(self.data[i].tolist())
 
     def __maximization(self):
         for i in range(self.k):
