@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 import k_means
-
+import gaussian_mixture_model
 
 def watermelon_data():
     watermelon = np.array([[0.697, 0.46],
@@ -60,50 +60,34 @@ k = 3
 means = [[2, 4], [0, -4], [-2, 2]]
 number = [100, 100, 100]
 data = generate_data(means, number, k)
-# import scipy.stats
-# import random
-# import collections
-# mu = np.array(data[random.sample(range(300), k)])
-# sigma = collections.defaultdict(list)
-# for i in range(k):
-#     sigma[i] = np.cov(mu[i], mu[i]).tolist()
-# # sigma = np.cov(mu[0], mu[0])
-# print(mu.shape)
-# print(np.array(sigma))
-# likehoods = np.zeros((300, k))
-# for i in range(k):
-#     temp = scipy.stats.multivariate_normal(data, mu[i], sigma[i])
-#     likehoods[:,i] = temp
-# import gaussian_mixture_model
-#
-# gmm = gaussian_mixture_model.GaussianMixtureModel(data)
-import  test
-gmm = test.GaussianMixtureModel()
-c = gmm.predict(data)
-# c = gmm.predict()
-print(c)
-# # for i in range(k):
-# #     plt.scatter(np.array(c[i])[:, 0], np.array(c[i])[:, 1], marker="x", label=str(i + 1))
-# plt.show()
 
+km = k_means.KMeans(data, k)
+mu_random, c_random = km.k_means_random_center()
+mu_normal, c_normal = km.k_means_not_random_center()
+# watermelon = watermelon_data()
+# mu, c = k_means(watermelon, k)
+plt.subplot(131)
+plt.title("K-Means:randomly")
+for i in range(k):
+    plt.scatter(np.array(c_random[i])[:, 0], np.array(c_random[i])[:, 1], marker="x", label=str(i + 1))
+plt.scatter(mu_random[:, 0], mu_random[:, 1], facecolor="none", edgecolor="r", label="center")
+plt.legend()
 
-# km = k_means.KMeans(data, k)
-# mu_random, c_random = km.k_means_random_center()
-# mu_normal, c_normal = km.k_means_not_random_center()
-# # watermelon = watermelon_data()
-# # mu, c = k_means(watermelon, k)
-# plt.subplot(121)
-# plt.title("Choose cluster center randomly")
-# for i in range(k):
-#     plt.scatter(np.array(c_random[i])[:, 0], np.array(c_random[i])[:, 1], marker="x", label=str(i + 1))
-# plt.scatter(mu_random[:, 0], mu_random[:, 1], facecolor="none", edgecolor="r", label="center")
-# plt.legend()
+plt.subplot(132)
+plt.title("K-Means:max distances")
+for i in range(k):
+    plt.scatter(np.array(c_normal[i])[:, 0], np.array(c_normal[i])[:, 1], marker="x", label=str(i + 1))
+plt.scatter(mu_normal[:, 0], mu_normal[:, 1], facecolor="none", edgecolor="r", label="center")
+plt.legend()
 
-# plt.subplot(122)
-# plt.title("Choose cluster center with each of them max distances")
-# for i in range(k):
-#     plt.scatter(np.array(c_normal[i])[:, 0], np.array(c_normal[i])[:, 1], marker="x", label=str(i + 1))
-# plt.scatter(mu_normal[:, 0], mu_normal[:, 1], facecolor="none", edgecolor="r", label="center")
-# plt.legend()
+gmm = gaussian_mixture_model.GaussianMixtureModel(data, k=k)
+mu_gmm, c_gmm = gmm.predict()
 
-# plt.show()
+plt.subplot(133)
+plt.title("GMM")
+for i in range(k):
+    plt.scatter(np.array(c_gmm[i])[:, 0], np.array(c_gmm[i])[:, 1], marker="x", label=str(i + 1))
+plt.scatter(mu_gmm[:, 0], mu_gmm[:, 1], facecolor="none", edgecolor="r", label="center")
+plt.legend()
+
+plt.show()

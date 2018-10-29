@@ -17,7 +17,6 @@ class GaussianMixtureModel(object):
         self.__mu, self.__sigma = self.__init_params()
         self.__sample_assignments = None
         self.c = collections.defaultdict(list)
-        self.responsibilities = []
         self.__last_alpha = self.__alpha
         self.__last_mu = self.__mu
         self.__last_sigma = self.__sigma
@@ -63,7 +62,6 @@ class GaussianMixtureModel(object):
         self.__sample_assignments = self.__gamma.argmax(axis=1)    # (m,)
         for i in range(self.data_rows):
             self.c[self.__sample_assignments[i]].append(self.data[i].tolist())
-        self.responsibilities.append(np.max(self.__gamma, axis=1))
 
     def __maximization(self):
         for i in range(self.k):
@@ -73,19 +71,23 @@ class GaussianMixtureModel(object):
             self.__mu[i], self.__sigma[i] = mean, covariance
         self.__alpha = self.__gamma.sum(axis=0) / self.data_rows
 
-    def converged(self):
-        if len(self.responsibilities) < 2:
+    def __converged(self):
+        diff = np.linalg.norm(self.__last_alpha - self.__alpha) \
+               + np.linalg.norm(self.__last_mu - self.__mu) \
+               + np.sum([np.linalg.norm(self.__last_sigma[i] - self.__sigma[i]) for i in range(self.k)])
+        if diff > self.delta:
+            self.__last_sigma = self.__sigma
+            self.__last_mu = self.__mu
+            self.__last_alpha = self.__alpha
             return False
-        diff = np.linalg.norm(
-            self.responsibilities[-1] - self.responsibilities[-2])
-        return diff <= self.delta
+        else:
+            return True
 
     def predict(self):
         for i in range(self.max_iteration):
             self.__expectation()
             self.__maximization()
-            if self.converged():
+            if self.__converged():
                 break
         self.__expectation()
-        print(len(self.responsibilities))
-        return self.c, self.__mu
+        return self.__mu, self.c
