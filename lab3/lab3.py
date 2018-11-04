@@ -3,6 +3,8 @@ from matplotlib import pyplot as plt
 
 import k_means
 import gaussian_mixture_model
+import iris_read
+
 
 def watermelon_data():
     watermelon = np.array([[0.697, 0.46],
@@ -92,11 +94,15 @@ plt.legend()
 
 plt.show()
 
-# import iris_read
-# iris = iris_read.IrisProcessing()
-# iris_data = iris.get_data()
-# gmm_iris = gaussian_mixture_model.GaussianMixtureModel(iris_data)
-# mu_iris, c_iris = gmm_iris.predict()
-# print(gmm_iris.sample_assignments)
-# print(iris.accuracy(gmm_iris.sample_assignments))
-# TODO 问题在于如何将各个类别的序号统一 如对于某种花 可能使用的编号分别是1和2 即使其表示同一种花
+iris = iris_read.IrisProcessing()
+iris_data = iris.get_data()
+gmm_iris = gaussian_mixture_model.GaussianMixtureModel(iris_data, k)
+mu_iris, c_iris = gmm_iris.predict()
+print(mu_iris)
+
+km_iris = k_means.KMeans(iris_data, 3)
+km_mu_iris, km_c_iris = km_iris.k_means_not_random_center()
+print(km_mu_iris)
+print(iris.acc(gmm_iris.sample_assignments))
+print(iris.acc(km_iris.sample_assignments))
+# TODO 对iris数据集，使用GMM得到的正确率低于使用k-means正确率
