@@ -7,7 +7,7 @@ import collections
 class GaussianMixtureModel(object):
     """ 高斯混合聚类EM算法 """
 
-    def __init__(self, data, k=3, delta=1e-6, max_iteration=1000):
+    def __init__(self, data, k=3, delta=1e-12, max_iteration=1000):
         self.data = data
         self.k = k
         self.delta = delta
@@ -49,6 +49,13 @@ class GaussianMixtureModel(object):
             sigma[i] = np.eye(self.data_columns, dtype=float) * 0.1
         return mu, sigma
 
+    # def __gaussian(self, mean, cov):
+    #     det = np.linalg.det(cov)
+    #     cov_i = np.linalg.pinv(cov)
+    #     temp_x = np.math.pow(2 * np.pi, 0.5 * self.data_columns) * np.math.pow(det, 0.5)
+    #     temp_y = np.exp(-0.5 * (self.data[5] - mean).T.dot(cov_i).dot(self.data[5] - mean))
+    #     return 1.0 * temp_y / temp_x
+
     def __likelihoods(self):
         likelihoods = np.zeros((self.data_rows, self.k))
         for i in range(self.k):
@@ -56,6 +63,7 @@ class GaussianMixtureModel(object):
         return likelihoods
 
     def __expectation(self):
+        # 求期望 E
         weighted_likelihoods = self.__likelihoods() * self.__alpha    # (m,k)
         sum_likelihoods = np.expand_dims(np.sum(weighted_likelihoods, axis=1), axis=1)  # (m,1)
         self.__gamma = weighted_likelihoods / sum_likelihoods    # (m,k)
@@ -64,14 +72,16 @@ class GaussianMixtureModel(object):
             self.c[self.sample_assignments[i]].append(self.data[i].tolist())
 
     def __maximization(self):
+        # 最大化 M
         for i in range(self.k):
             gamma = np.expand_dims(self.__gamma[:, i], axis=1)    # 提取每一列 作为列向量 (m, 1)
             mean = (gamma * self.data).sum(axis=0) / gamma.sum()
             covariance = (self.data - mean).T.dot((self.data - mean) * gamma) / gamma.sum()
-            self.__mu[i], self.__sigma[i] = mean, covariance
+            self.__mu[i], self.__sigma[i] = mean, covariance    # 更新参数
         self.__alpha = self.__gamma.sum(axis=0) / self.data_rows
 
     def __converged(self):
+        # 迭代终止条件 参数sigma mu和alpha几乎不变化
         diff = np.linalg.norm(self.__last_alpha - self.__alpha) \
                + np.linalg.norm(self.__last_mu - self.__mu) \
                + np.sum([np.linalg.norm(self.__last_sigma[i] - self.__sigma[i]) for i in range(self.k)])

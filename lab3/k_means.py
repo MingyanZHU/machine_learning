@@ -10,6 +10,7 @@ class KMeans(object):
         self.delta = delta
         self.__data_rows, self.__data_columns = data.shape
         self.__mu = self.__initial_center_not_random()
+        self.sample_assignments = [-1] * self.__data_rows
 
     @staticmethod
     def __euclidean_distance(x1, x2):
@@ -38,6 +39,7 @@ class KMeans(object):
                     self.data[i], self.__mu[j]) for j in range(self.k)]
                 lambda_j = np.argmin(dij)
                 c[lambda_j].append(self.data[i].tolist())
+                self.sample_assignments[i] = lambda_j
 
             new_mu = np.array([np.mean(c[i], axis=0).tolist()
                                for i in range(self.k)])
