@@ -10,7 +10,7 @@
 <center> <font size = 5> 
 课程名称：机器学习 <br/>
 课程类型：必修  <br/>
-实验题目：实现k-means聚类方和混合高斯模型
+实验题目：实现k-means聚类和混合高斯模型
 </font></center>
 <br/>
 <br/>
@@ -21,27 +21,101 @@
 <!-- 此处用于换行 -->
 
 # 一、实验目的
-## 实验目标
 实现一个k-means算法和混合高斯模型，并用EM算法估计模型中的参数。
-## 测试
+# 二、实验要求及实验环境
+## 实验要求
+### 测试
 用高斯分布产生k个高斯分布的数据(不同均值和方差)(其中参数自己设定)
 1. 用k-means聚类测试效果，
 2. 用混合高斯模型和你实现的EM算法估计参数，看看每次迭代后似然值变化情况，考察EM算法是否可以获得正确结果(与你的设定结果比较)。
-## 应用
+### 应用
 可以在UCI上找一个简单问题数据，用你实现的GMM进行聚类。
-# 二、实验要求及实验环境
-
-## 实验要求
-
 ## 实验环境
-
-# 三、设计思想(本程序中的用到的主要算法及数据结构)
+- **OS**: Ubuntu 16.04.5 LTS
+- python 3.7.0
+# 三、设计思想(本程序中用到的主要算法及数据结构)
 
 ## 1.算法原理
+### 1.1 K-Means算法原理
+给定样本集$D = \{\bold{x_1, x_2, \dots, x_m}\}$和划分聚类的数量$k$，给出一个簇划分$C = \{\bold{C_1, C_2, \dots, C_k}\}$，使得该簇划分的**平方误差**$E$最小化，其中$E$如式$(1)$
 
+$$
+E = \sum\limits_{i = 1}^k{\sum\limits_{\bold{x \in C_i}}{||\bold{x - \mu_i}||^2_2}} \tag{1}
+$$
+
+式$(1)$中，$\bold{\mu_i} = \dfrac{1}{|\bold{C_i}|}\sum_{\bold{x \in C_i}}\bold{x}$是簇$\bold{C_i}$的均值向量。$E$刻画了簇内样本的内聚的紧密程度，其值越小，则簇内样本的相似度越高。
+
+> K-Means的优化目标需要考察到样本集$D$的全部可能的划分，这是一个NP难的问题。因此K-Means采用贪心策略，通过迭代优化来近似求解。
+
+迭代优化的策略如下：
+1. 首先初始化一组均值向量
+2. 根据初始化的均值向量给出样本集$D$的一个划分，**样本距离那个簇的均值向量距离最近，则将该样本划归到哪个簇**
+3. 再根据这个划分来计算每个簇内真实的均值向量，如果真实的均值向量与假设的均值向量相同，假设正确；否则，将真实的均值向量作为新的假设均值向量，回到1.继续迭代求解。
+
+### 1.2 GMM算法原理
+首先给出$n$维样本空间中的随机变量$\bold{x}$服从高斯分布的密度函数：
+$$
+p(\bold{x}|\bold{\mu}, \Sigma) =  \cfrac{1}{(2\pi)^{\frac{n}{2}}|\Sigma|^{\frac{1}{2}}} exp \left(-\dfrac{1}{2}(\bold{x - \mu})^T\Sigma^{-1}(\bold{x - \mu})\right) \tag{2}
+$$
+
+其中$\mathbb{\mu}=\{\mu_1, \mu_2, \dots, \mu_n\}$为n维的均值向量，$\Sigma$是$n \times n$的协方差阵。
+
+再给出混合高斯分布的定义：
+$$
+p_{\mathcal{M}}=\sum\limits_{i=1}^k\alpha_ip(\bold{x}|\bold{\mu_i}, \Sigma) \tag{3}
+$$
+这个分布由$k$个混合成分构成，每个混合成分对应一个高斯分布。其中$\bold{\mu_i}, \Sigma$是第$k$个高斯分布的均值和协方差矩阵，$\alpha_i > 0$为相应的混合系数，满足$\sum_{i=1}^k\alpha_i = 1$。
+
+我们假设对于样本集$D$由高斯混合分布给出：首先根据$\alpha_1, \alpha_2, \dots, \alpha_k$定义的先验分布选择高斯分布混合成分，即$p(z_j = i) = \alpha_i$，其中$z_j \in \{1, 2, \dots, k\}$；然后，根据被选择的高斯混合成分的概率密度函数进行采样，从而生成相应的样本。那么根据贝叶斯定理，$z_j$的后验分布对应于：
+$$
+p_{\mathcal{M}}(z_j = i|\bold{x_j}) = \cfrac{p(z_j = i) \cdot p_{\mathcal{M}}(\bold{x_j}|z_j = i)}{p_{\mathcal{M}}(\bold{x_j})}
+ = \cfrac{\alpha_i \cdot p(\bold{x_j}|\bold{\mu_i}, \Sigma_i)}{\sum\limits_{l=1}^k\alpha_lp(\bold{x_j}|\bold{\mu_l}, \Sigma_l)}\tag{4}
+ $$
+
+$p_{\mathcal{M}}(z_j = i|\bold{x_j})$给出了样本$\bold{x_j}$由第$i$个高斯混合分布生成的后验概率。
+
+当式$(3)$已知时，混合高斯模型将样本集$D$划分成了$k$个簇$C = \{\bold{C_1, C_2, \dots, C_k}\}$，对于每一个样本$\bold{x_j}$，其簇标记为$\lambda_j$:
+$$
+\lambda_j = \mathbf{arg\ max}_i p_{\mathcal{M}}(z_j = i|\bold{x_j})
+\tag{5}
+$$
+
+**关键在与参数**$\{\alpha_i, \mu_i, \Sigma_i|i \in \{1, 2, \dots, k\}\}$**的求解**，如果给定样本集$D$可以采用极大似然估计(最大化对数似然)：
+$$
+\ln\left(\prod\limits_{j=1}^m p_{\mathcal{M}}(\bold{x_j})\right) = \sum\limits_{j=1}^m\ln\left(\sum\limits_{i=1}^k\alpha_i \cdot p(\bold{x_j}|\mu_i, \Sigma_i)\right) \tag{6}
+$$
+使式$(6)$最大化，对$\mu_i$求导令导数为0有：
+$$
+\sum\limits_{j=1}^m\cfrac{\alpha_i \cdot p(\bold{x_j}|\mu_i, \Sigma_i)}{\sum\limits_{l=1}^k \alpha_l \cdot p(\bold{x_j}|\mu_l, \Sigma_l)}\Sigma_i^{-1}(\bold{x_j - \mu_i}) = 0 \tag{7}
+$$
+两边同乘$\Sigma_i$进行化简有：
+$$
+\mu_i = \cfrac{\sum_{j = 1}^mp_{\mathcal{M}}(z_j = i|\bold{x_j})\cdot \bold{x_j}}{\sum_{j = 1}^m p_{\mathcal{M}}(z_j = i|\bold{x_j})}
+$$
 ## 2.算法的实现
+### 2.1 K-Means算法实现
+#### 2.1.1 随机选择样本作为初始均值向量
+1. 从样本集$D$中随机选择$k$个样本作为初始化的假设均值向量$\{\bold{\mu_1, \mu_2, \dots, \mu_k}\}$
+2. 重复迭代直到算法收敛：
+    1. 初始化$\bold{C_i} = \emptyset, i = 1, 2, \dots, k$
+    2. 对$\bold{x_j}, j = 1, 2, \dots, m$标记为$\lambda_j$，使得$\lambda_j = \mathbf{arg\ min}_i ||\bold{x_j - \mu_i}||$，即使得每个$\bold{x_j}$都是属于距离其最近的均值向量所在的簇
+    3. 将样本$\bold{x_j}$划分到相应的簇$\bold{C_{\lambda_j}} = \bold{C_{\lambda_j} \cup \{\bold{x_j}\}}$
+    4. 重新计算每个簇的均值向量$\bold{\hat{\mu_i}} = \dfrac{1}{|\bold{C_i}|}\sum_{\bold{x \in C_i}}\bold{x}$
+    5. 如果对于所有的$i \in {1, 2, \dots, k}$，均有$\bold{\hat{\mu_i} = \bold{\mu_i}}$，则终止迭代；否则将重新赋值$\bold{\mu_i} = \bold{\hat{\mu_i}}$进行迭代
+#### 2.1.2 利用最大化初始均值向量之间距离方式进行选择
+在下面的实验结果分析中，我们可以看到`2.1.1 K-Means算法`的聚类结果严重依赖于初始化的簇中心，所以当初始化的簇中心“不好”的时候，会导致整个的聚类结果不好，所以下面采用了一种最大化簇中心距离的方法，选择均值向量。
 
+仅对于2.1.1节中2.1进行优化：
+- 首先随机选择一个样本作为均值向量
+- 进行迭代，直到选择到$k$个均值向量：
+    - 假设当前已经选择到$i$个均值向量$\{\bold{\mu_1, \mu_2, \dots, \mu_i}\}$，则在$D \\ \{\bold{\mu_1, \mu_2, \dots, \mu_i}\}$选择距离已选出的$i$个均值向量距离最远的样本
+    - 将其加入初始均值向量，得到$\{\bold{\mu_1, \mu_2, \dots, \mu_i, \mu_{i+1}}\}$
+通过这种初始化均值向量的方式，能够有效降低初始簇中心的“集中程度”，在一定程度上避免结果陷入局部最优解。
+### 2.2 GMM算法实现
 # 四、实验结果分析
+## 1. 生成数据的测试
+
+## 2. UCI数据测试
 
 # 五、结论
 
