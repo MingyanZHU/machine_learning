@@ -152,9 +152,31 @@ GMM常采用EM算法进行迭代优化求解，其中每次迭代中，先根据
 
 # 四、实验结果分析
 ## 1. 生成数据的测试
+在生成数据时，使用的是二维空间上的数据，便于数据可视化；利用二维高斯分布，按照给定的均值和样本数量要求生成数据。
+### 1.1 K-Means两种不同初始值方法结果对比
+在`三.2.1`中提到了两种初始化的方式，在这里我们对比一下他们聚类的结果。
+![K_means_compared](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab3/Compared_K_means.png)
 
+可以看到，在左侧，使用的随机选择初始簇中心的方式，在这次的运行中，就由于初始簇中心的问题，导致陷入局部最优解，没能有效地将样本分为三类；而在右侧则是使用选择距离最远的$k$个初始簇中心，将彼此之间的距离增大有效地划分了三类。
+### 1.2 K-Means与GMM对比
+同样使用生成数据，对比K-Means和GMM的结果如下：
+![](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab3/Compared_K_means_GMM_only.png)
 ## 2. UCI数据测试
+使用的UCI的数据是Iris(鸢尾花)数据集，根据其4个属性：
+- 花萼长度
+- 花萼宽度
+- 花瓣长度
+- 花瓣宽度
+来预测鸢尾花属于(Setosa, Versicolour, Virginica)三类中的哪一类。
 
+由于k-means和GMM输出的结果中，类别的编号可能是不同的，所以将所有可能的序号排列均进行测试，**与测试样本中给出的label进行对比**，得到的最优的结果作为最终的结果。此外还需要标注每个样本属于哪个类别。
+最终的测试结果如下,上面为GMM结果，下面为K-means的准确度：
+![Iris.png](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab3/iris.png)
+## 3. 关于GMM算法迭代中变化
+在实际执行中，将GMM初始参数的初始化方式与K-Means类似，均是选择$k$个距离最远的均值$\mu_i$，协方差阵初始化为$n \times n$的对角阵，对角元素均为0.1，混合系数取$\frac{1}{k}$。
+在执行过程中，查看似然值的变化，如下：
+![GMM.png](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab3/GMM.png)
+可以看到，**似然值始终在增大**，与预期相符。
 # 五、结论
 
 # 六、参考文献
