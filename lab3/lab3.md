@@ -160,7 +160,9 @@ GMM常采用EM算法进行迭代优化求解，其中每次迭代中，先根据
 可以看到，在左侧，使用的随机选择初始簇中心的方式，在这次的运行中，就由于初始簇中心的问题，导致陷入局部最优解，没能有效地将样本分为三类；而在右侧则是使用选择距离最远的$k$个初始簇中心，将彼此之间的距离增大有效地划分了三类。
 ### 1.2 K-Means与GMM对比
 同样使用生成数据，对比K-Means和GMM的结果如下：
-![](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab3/Compared_K_means_GMM_only.png)
+![K_means compared GMM](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab3/Compared_K_means_GMM_only.png)
+
+可以看到，两种方法在生成数据上的表现类似，都可以实现聚类。
 ## 2. UCI数据测试
 使用的UCI的数据是Iris(鸢尾花)数据集，根据其4个属性：
 - 花萼长度
@@ -171,22 +173,27 @@ GMM常采用EM算法进行迭代优化求解，其中每次迭代中，先根据
 
 由于k-means和GMM输出的结果中，类别的编号可能是不同的，所以将所有可能的序号排列均进行测试，**与测试样本中给出的label进行对比**，得到的最优的结果作为最终的结果。此外还需要标注每个样本属于哪个类别。
 最终的测试结果如下,上面为GMM结果，下面为K-means的准确度：
+
 ![Iris.png](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab3/iris.png)
 ## 3. 关于GMM算法迭代中变化
 在实际执行中，将GMM初始参数的初始化方式与K-Means类似，均是选择$k$个距离最远的均值$\mu_i$，协方差阵初始化为$n \times n$的对角阵，对角元素均为0.1，混合系数取$\frac{1}{k}$。
 在执行过程中，查看似然值的变化，如下：
+
 ![GMM.png](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab3/GMM.png)
+
 可以看到，**似然值始终在增大**，与预期相符。
 # 五、结论
-
+- K-Means实际上假设数据式呈球状分布，与之相比GMM使用更加一般的数据表示即高斯分布
+- K-Means假设使用的欧式距离来衡量样本与各个簇中心的相似度(假设数据的各个维度对于相似度计算的作用是相同的)
+- K-Means的簇中心初始化对于最终的结果有很大的影响，如果选择不好初始的簇中心值容易使之陷入局部最优解
+- GMM使用EM算法进行迭代优化，因为其涉及到隐变量的问题，没有之前的完全数据，而是在不完全数据上进行。
 # 六、参考文献
-
+- [Christopher Bishop. Pattern Recognition and Machine Learning.](https://www.springer.com/us/book/9780387310732)
+- [周志华 著. 机器学习, 北京: 清华大学出版社, 2016.1](https://cs.nju.edu.cn/zhouzh/zhouzh.files/publication/MLbook2016.htm)
+- [UCI Iris](http://archive.ics.uci.edu/ml/datasets/Iris)
+- [AI Note](http://www.huaxiaozhuan.com/%E7%BB%9F%E8%AE%A1%E5%AD%A6%E4%B9%A0/chapters/11_cluster.html)
 # 七、附录:源代码(带注释)
-
-```python
-print("Hello world")
-
-import numpy as np
-
-np.one(10)
-```
+- 主程序见`lab3.py`
+- K-means聚类算法见`k_means.py`
+- 混合高斯模型见`gaussian_mixture_model.py`
+- 从Iris数据集中读取数据见`iris_read.py`

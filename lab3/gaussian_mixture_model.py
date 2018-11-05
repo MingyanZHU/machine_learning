@@ -66,6 +66,7 @@ class GaussianMixtureModel(object):
         # 求期望 E
         weighted_likelihoods = self.__likelihoods() * self.__alpha    # (m,k)
         sum_likelihoods = np.expand_dims(np.sum(weighted_likelihoods, axis=1), axis=1)  # (m,1)
+        print(np.log(np.prod(sum_likelihoods)))     # 输出似然值
         self.__gamma = weighted_likelihoods / sum_likelihoods    # (m,k)
         self.sample_assignments = self.__gamma.argmax(axis=1)    # (m,)
         for i in range(self.data_rows):
@@ -94,7 +95,9 @@ class GaussianMixtureModel(object):
             return True
 
     def predict(self):
+        print("GMM")
         for i in range(self.max_iteration):
+            print(i)
             self.__expectation()
             self.__maximization()
             if self.__converged():
