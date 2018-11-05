@@ -82,7 +82,7 @@ $$
 
 **关键在与参数**$\{\alpha_i, \mu_i, \Sigma_i|i \in \{1, 2, \dots, k\}\}$**的求解**，如果给定样本集$D$可以采用极大似然估计(最大化对数似然)：
 $$
-\ln\left(\prod\limits_{j=1}^m p_{\mathcal{M}}(\bold{x_j})\right) = \sum\limits_{j=1}^m\ln\left(\sum\limits_{i=1}^k\alpha_i \cdot p(\bold{x_j}|\mu_i, \Sigma_i)\right) \tag{6}
+LL(D) = \ln\left(\prod\limits_{j=1}^m p_{\mathcal{M}}(\bold{x_j})\right) = \sum\limits_{j=1}^m\ln\left(\sum\limits_{i=1}^k\alpha_i \cdot p(\bold{x_j}|\mu_i, \Sigma_i)\right) \tag{6}
 $$
 使式$(6)$最大化，对$\mu_i$求导令导数为0有：
 $$
@@ -90,8 +90,36 @@ $$
 $$
 两边同乘$\Sigma_i$进行化简有：
 $$
-\mu_i = \cfrac{\sum_{j = 1}^mp_{\mathcal{M}}(z_j = i|\bold{x_j})\cdot \bold{x_j}}{\sum_{j = 1}^m p_{\mathcal{M}}(z_j = i|\bold{x_j})}
+\mu_i = \cfrac{\sum_{j = 1}^mp_{\mathcal{M}}(z_j = i|\bold{x_j})\cdot \bold{x_j}}{\sum_{j = 1}^m p_{\mathcal{M}}(z_j = i|\bold{x_j})} \tag{8}
 $$
+**即各个混合成分的均值可以通过样本加权平均来估计，权重样本式每个样本属于该成分的后验概率。**
+
+同理式$(6)$对$\Sigma_i$求导令导数为0有：
+$$
+\Sigma_i = \cfrac{\sum_{j = 1}^mp_{\mathcal{M}}(z_j = i|\bold{x_j})\cdot(\bold{x_j - \mu_i})(\bold{x_j - \mu_i})^T}{\sum_{j=1}^mp_{\mathcal{M}}(z_j = i|\bold{x_j})} \tag{9}
+$$
+
+对于混合系数$\alpha_i$，由于其还需要满足$\alpha_i \geq 0, \sum_i^k\alpha_i = 1$，所以在式$(6)$的基础上增加拉格朗日项：
+$$
+LL(D) + \lambda \left(\sum\limits_{i=1}^k\alpha_i -1\right) \tag{10}
+$$
+其中$\lambda$为拉格朗日乘子，由式$(10)$对$\alpha_i$求导并令导数为0有：
+$$
+\sum\limits_{j=1}^m\cfrac{p(\bold{x_j}|\mu_i, \Sigma_i)}{\sum_{l=1}^k\alpha_l \cdot p(\bold{x_j}|\mu_l, \Sigma_l)} + \lambda = 0 \tag{11}
+$$
+式$(11)$两边同乘$\alpha_i$并将$i \in \{1, 2, \dots, k\}$代入相加得：
+$$
+\sum\limits_{i=1}^k\left(\alpha_i \cdot \sum\limits_{j=1}^m \cfrac{p(\bold{x_j}|\mu_i, \Sigma_i)}{\sum\limits_{l=1}^k\alpha_l \cdot p(\bold{x_j}|\mu_i, \Sigma_i)}\right) + \lambda\sum\limits_{i=1}^k\alpha_i = 0 \tag{12}
+$$
+整理一下，由于$\sum_{i=1}^k \alpha_i = 1$:
+$$
+\sum\limits_{j=1}^m\left(\cfrac{\sum\limits_{i=1}^k \alpha_i \cdot p(\bold{x_j}|\mu_i, \Sigma_i)}{\sum\limits_{l=1}^k\alpha_l \cdot p(\bold{x_j}|\mu_i, \Sigma_i)}\right) + \lambda = m + \lambda = 0 \tag{13}
+$$
+从而有$\lambda = -m$，结合式$(11)$有：
+$$
+\alpha_i = \dfrac{1}{m}\sum\limits_{j=1}^m\cfrac{p(\bold{x_j}|\mu_i, \Sigma_i)}{\sum_{l=1}^k\alpha_l \cdot p(\bold{x_j}|\mu_l, \Sigma_l)} \tag{14}
+$$
+**即每个高斯成分的混合系数由样本属于该成分的平均后验概率确定**。
 ## 2.算法的实现
 ### 2.1 K-Means算法实现
 #### 2.1.1 随机选择样本作为初始均值向量
@@ -112,6 +140,16 @@ $$
     - 将其加入初始均值向量，得到$\{\bold{\mu_1, \mu_2, \dots, \mu_i, \mu_{i+1}}\}$
 通过这种初始化均值向量的方式，能够有效降低初始簇中心的“集中程度”，在一定程度上避免结果陷入局部最优解。
 ### 2.2 GMM算法实现
+GMM常采用EM算法进行迭代优化求解，其中每次迭代中，先根据当前参数来计算每个样本属于每个高斯成分的后验概率，所谓“E步”；再根据式$(8)(9)(14)$更新参数，所谓“M步”。
+
+给定样本集$D$和高斯混合成分数目$k$。
+1. 随机初始化参数$\{\alpha_i, \mu_i, \Sigma_i|i \in \{1, 2, \dots, k\}\}$以及$\bold{C_i} = \emptyset$
+2. 开始迭代至带到迭代次数或者是参数值不再发生变化：
+    1. E步，根据式$(4)$计算每个样本由各个混合高斯成分生成的后验概率
+    2. M步，根据式$(8)(9)(14)$更新参数$\{\alpha_i, \mu_i, \Sigma_i|i \in \{1, 2, \dots, k\}\}$
+3. 根据式$(5)$确定每个样本的簇标记$\lambda_j$，并将其加入相应的簇$\bold{C_{\lambda_j}} = \bold{C_{\lambda_j} \cup \{\bold{x_j}\}}$
+4. 输出簇划分$C = \{\bold{C_1, C_2, \dots, C_k}\}$
+
 # 四、实验结果分析
 ## 1. 生成数据的测试
 
