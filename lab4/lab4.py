@@ -1,6 +1,12 @@
 import numpy as np
+import os
+import struct
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+
+MNIST_DIMENSION = 784
+MNIST_WIDTH = 28
+MNIST_HEIGHT = 28
 
 
 def generate_data(data_dimension, number=100):
@@ -16,6 +22,18 @@ def generate_data(data_dimension, number=100):
     for index in range(number):
         sample_data.append(np.random.multivariate_normal(mean, cov).tolist())
     return np.array(sample_data)
+
+
+def load_mnist(path, kind='train'):
+    labels_path = os.path.join(path, '%s-labels.idx1-ubyte' % kind)
+    images_path = os.path.join(path, '%s-images.idx3-ubyte' % kind)
+    with open(labels_path, 'rb') as lbpath:
+        magic, n = struct.unpack('>II', lbpath.read(8))
+        labels = np.fromfile(lbpath, dtype=np.uint8)
+    with open(images_path, 'rb') as imgpath:
+        magic, num, rows, cols = struct.unpack('>IIII', imgpath.read(16))
+        images = np.fromfile(imgpath, dtype=np.uint8).reshape(len(labels), MNIST_DIMENSION)
+    return images, labels
 
 
 def draw_data(dimension_draw, origin_data, pca_data):
@@ -42,12 +60,18 @@ def pca(data, reduced_dimension):
     cov = decentralise_x.T.dot(decentralise_x)
     eigenvalues, feature_vectors = np.linalg.eig(cov)
     min_d = np.argsort(eigenvalues)
-    for i in range(columns - reduced_dimension):
-        feature_vectors = np.delete(feature_vectors, min_d[i], axis=1)
+    feature_vectors = np.delete(feature_vectors, min_d[:columns - reduced_dimension], axis=1)
     return feature_vectors, x_mean
 
 
-dimension = 2
+def psnr(source, target):
+    diff = source - target
+    diff = diff**2
+    rmse = np.sqrt(np.mean(diff))
+    return 20 * np.log10(1.0 / rmse)
+
+
+dimension = 3
 data_number = 50
 x = generate_data(dimension, number=data_number)
 w, mu_x = pca(x, dimension - 1)
@@ -57,3 +81,21 @@ print(w)
 print("Mean vector:")
 print(mu_x)
 draw_data(dimension, x, x_pca)
+
+X_train, y_train = load_mnist('./mnist')
+w_mnist, mu_mnist = pca(X_train, 60)
+x_pca_mnist = (X_train - mu_mnist).dot(w_mnist).dot(w_mnist.T) + mu_mnist
+print("PSNR:")
+print(np.abs(np.mean([psnr(X_train[i], x_pca_mnist[i]) for i in range(len(X_train))])))
+x_pca_show = x_pca_mnist.astype(np.int)
+fig, ax = plt.subplots(nrows=5, ncols=4, sharex='all', sharey='all')
+ax = ax.flatten() 
+for i in range(10): 
+    img = X_train[i].reshape(MNIST_HEIGHT, MNIST_WIDTH) 
+    ax[2*i].imshow(img, cmap='Greys') 
+    img_compared = x_pca_show[i].reshape(MNIST_HEIGHT, MNIST_WIDTH)
+    ax[2*i+1].imshow(img_compared, cmap='Greys', interpolation='nearest')
+ax[0].set_xticks([]) 
+ax[0].set_yticks([]) 
+plt.tight_layout() 
+plt.show()
