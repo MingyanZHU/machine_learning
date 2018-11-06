@@ -96,9 +96,61 @@ $$
 <center>
 <img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab4/3_dimension_plat.png">
 </center>
-降维后的数据
+降维后的数据分布在一个平面(2维)上，并且与方差最小的1维相垂直。
+
+对比其他方向，可以看到经过PCA将样本数据进行了投影，投影在了一个平面上，如下图所示。
+
+<center>
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab4/3_dimension_plat_2.png">
+</center>
 
 ## 2.[mnist]((http://yann.lecun.com/exdb/mnist/))手写数据集测试
+MNIST数据集来自美国国家标准与技术研究所(National Institute of Standards and Technology)，在本次实验中仅使用了其中的训练集(training set)部分，来自250个不同人手写的数组构成，其中50%为高中学生，50%来自人口普查局的工作人员。
+
+图片是以字节的形式进行存储的，训练集包括60000个样本。每张图片由28\*28个像素点组成，每个像素点用一个灰度值表示，总的来说每个样本有784个属性。
+
+在读取时，我们使用训练集，分别得到训练集矩阵(60000\*784)，每一行代表一张图片，训练集对应的label(60000\*1)，每一行为0~9，表示对应行的图片代表的数字。
+
+在训练时，我们将784维的数据分别降维到10，20，30，60，100维，并对其对应的信噪比进行对比，得到下面的结果。
+
+**每张图片左侧为784维原始数据显示结果，右侧为对应的PCA之后的图像。**
+<center>
+
+![mnist_10.png](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab4/mnist_10.png)
+
+</center>
+
+降维到10的时候，有些数字已经可以大致分，如`0, 1`，但是对于其余数字还不能区分。
+
+<center>
+
+![mnist_20.png](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab4/mnist_20.png)
+
+</center>
+
+降维到20维时，可以看到又有一些数字，比如数字`9， 3`已经可以分辨了，但是仍然有些数字比较模糊，特别是这里的`2`，进一步提高低维空间的维数。
+
+<center>
+
+![mnist_30.png](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab4/mnist_30.png)
+
+![mnist_60.png](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab4/mnist_60.png)
+
+![mnist_100.png](https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab4/mnist_100.png)
+
+</center>
+
+可以看到，随着低维空间的维数提高，对于源数据的信息保留的更加全面。下面是不同维数下信噪比的记录，可以观察到**随着低维空间的维数升高，信噪比在下降**。
+
+<center>
+
+|Dimension|10|20|30|60|100|
+|-|-|-|-|-|-|
+|PSNR|33.25|31.60|30.37|27.74|25.36|
+
+</center>
+
+
 # 五、结论
 
 # 六、参考文献

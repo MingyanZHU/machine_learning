@@ -78,21 +78,22 @@ def psnr(source, target):
     rmse = np.sqrt(np.mean(diff))
     return 20 * np.log10(1.0 / rmse)
 
-# 用于生成数据的测试
-dimension = 3
-data_number = 50
-x = generate_data(dimension, number=data_number)
-w, mu_x = pca(x, dimension - 1)
-x_pca = (x - mu_x).dot(w).dot(w.T) + mu_x
-print("Feature vectors:")
-print(w)
-print("Mean vector:")
-print(mu_x)
-draw_data(dimension, x, x_pca)
+# # 用于生成数据的测试
+# dimension = 3
+# data_number = 50
+# x = generate_data(dimension, number=data_number)
+# w, mu_x = pca(x, dimension - 1)
+# x_pca = (x - mu_x).dot(w).dot(w.T) + mu_x
+# print("Feature vectors:")
+# print(w)
+# print("Mean vector:")
+# print(mu_x)
+# draw_data(dimension, x, x_pca)
 
 # 用于mnist数据集的测试
 X_train, y_train = load_mnist('./mnist')
-w_mnist, mu_mnist = pca(X_train, 60)
+d = 100
+w_mnist, mu_mnist = pca(X_train, d)
 x_pca_mnist = (X_train - mu_mnist).dot(w_mnist).dot(w_mnist.T) + mu_mnist
 print("PSNR:")
 print(np.abs(np.mean([psnr(X_train[i], x_pca_mnist[i]) for i in range(len(X_train))])))
@@ -107,4 +108,5 @@ for i in range(10):
 ax[0].set_xticks([]) 
 ax[0].set_yticks([]) 
 plt.tight_layout() 
+plt.title('Dimension = ' + str(d))
 plt.show()
