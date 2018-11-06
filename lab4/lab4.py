@@ -10,6 +10,7 @@ MNIST_HEIGHT = 28
 
 
 def generate_data(data_dimension, number=100):
+    """ 生成2维或者3维数据 """
     if data_dimension is 2:
         mean = [-2, 2]
         cov = [[1, 0], [0, 0.01]]
@@ -25,6 +26,7 @@ def generate_data(data_dimension, number=100):
 
 
 def load_mnist(path, kind='train'):
+    """ 读取mnist中的训练数据 """
     labels_path = os.path.join(path, '%s-labels.idx1-ubyte' % kind)
     images_path = os.path.join(path, '%s-images.idx3-ubyte' % kind)
     with open(labels_path, 'rb') as lbpath:
@@ -37,6 +39,7 @@ def load_mnist(path, kind='train'):
 
 
 def draw_data(dimension_draw, origin_data, pca_data):
+    """ 将PCA前后的数据进行可视化对比 """
     if dimension_draw is 2:
         plt.scatter(origin_data[:, 0], origin_data[:, 1], facecolor="none", edgecolor="b", label="Origin Data")
         plt.scatter(pca_data[:, 0], pca_data[:, 1], facecolor='r', label='PCA Data')
@@ -53,24 +56,29 @@ def draw_data(dimension_draw, origin_data, pca_data):
 
 
 def pca(data, reduced_dimension):
+    """ 进行PCA(Principal Component Analysis)
+    data:为原始数据
+    reduced_dimension:为需要降低到的维数 """
     rows, columns = data.shape
     assert reduced_dimension <= columns
     x_mean = 1.0 / rows * np.sum(data, axis=0)
-    decentralise_x = data - x_mean
-    cov = decentralise_x.T.dot(decentralise_x)
-    eigenvalues, feature_vectors = np.linalg.eig(cov)
+    decentralise_x = data - x_mean  # 去中心化
+    cov = decentralise_x.T.dot(decentralise_x)  # 计算协方差
+    eigenvalues, feature_vectors = np.linalg.eig(cov)   # 特征值分解
     min_d = np.argsort(eigenvalues)
+    # 选取最大的特征值对应的特征向量
     feature_vectors = np.delete(feature_vectors, min_d[:columns - reduced_dimension], axis=1)
     return feature_vectors, x_mean
 
 
 def psnr(source, target):
+    """ 计算信噪比 """
     diff = source - target
     diff = diff**2
     rmse = np.sqrt(np.mean(diff))
     return 20 * np.log10(1.0 / rmse)
 
-
+# 用于生成数据的测试
 dimension = 3
 data_number = 50
 x = generate_data(dimension, number=data_number)
@@ -82,6 +90,7 @@ print("Mean vector:")
 print(mu_x)
 draw_data(dimension, x, x_pca)
 
+# 用于mnist数据集的测试
 X_train, y_train = load_mnist('./mnist')
 w_mnist, mu_mnist = pca(X_train, 60)
 x_pca_mnist = (X_train - mu_mnist).dot(w_mnist).dot(w_mnist.T) + mu_mnist
