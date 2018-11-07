@@ -34,7 +34,125 @@
 # 三、设计思想(本程序中用到的主要算法及数据结构)
 
 ## 1.算法原理
+PCA(主成分分析，Principal Component Analysis)是最常用的一种降维方法。在周志华老师的机器学习书中给出了有关于两种有关PCA的推导，分别从**最近重构性**和**最大可分性**两种方面进行。
+> 如果超平面可以对正交属性空间的所有样本进行恰当表达，就要具有下面两个性质
+> - 最近重构性：样本点到这个超平面的距离都足够近
+> - 最大可分性：样本点在这个超平面上的投影尽可能分开
+
+### 1.1 中心化
+在PCA开始时都假设数据集进行了中心化，即：
+对于数据集${\bf D} = \{{\bf x}_1, {\bf x}_2, \dots, {\bf x}_m\}$，其中
+${\bf x}_i \in \mathbb{R}^n$。对每个样本均进行如下操作：
+$$
+    {\bf x}_i \leftarrow {\bf x}_i - \frac{1}{m}\sum\limits_{j = 1}^m{\bf x}_j
+$$
+其中${\bf \mu} = \frac{1}{m}\sum\limits_{j = 1}^m{\bf x}_j$称为样本集的$D$的中心向量。**之所以进行中心化，是因为经过中心化之后的常规的线性变换就是绕原点的旋转变化，也就是坐标变换；以及$\sum_{i=1}^m{\bf x}_i{\bf x}_i^T = {\bf X}^T{\bf X}$就是样本集的协方差矩阵**。
+
+经过中心化后的数据，有$\sum_{j = 1}^m{\bf x}_j = {\bf 0}$。设使用的投影坐标系的**标准正交向量基**为${\bf W} = \{{\bf w}_1, {\bf w}_2, \dots, {\bf w}_d\}, \ \ \ d < n$，每个样本降维后得到的坐标为:
+$${\bf z} = \{z_1, z_2, \dots, z_d\}  = {\bf W}^T{\bf x} \tag{1}$$
+因此，样本集与降维后的样本集表示为：
+$$
+{\bf X} =
+\left[
+    \begin{matrix}
+        {\bf x}_1^T \\
+        \vdots \\
+        {\bf x}_m^T
+    \end{matrix}
+    \right] =
+    \left[
+        \begin{matrix}
+            x_{1, 1} & x_{1, 2} & \cdots & x_{1, n} \\
+            x_{2, 1} & x_{2, 2} & \cdots & x_{2, n} \\
+            \vdots & \vdots & \ddots & \vdots \\
+            x_{m, 1} & x_{m, 2} & \cdots & x_{m, n}
+        \end{matrix}
+        \right], 
+{\bf Z} = 
+\left[
+    \begin{matrix}
+        {\bf z}_1^T \\
+        \vdots \\
+        {\bf z}_m^T
+    \end{matrix}
+    \right] =
+    \left[
+        \begin{matrix}
+            z_{1, 1} & z_{1, 2} & \cdots & z_{1, d} \\
+            z_{2, 1} & z_{2, 2} & \cdots & z_{2, d} \\
+            \vdots & \vdots & \ddots & \vdots \\
+            z_{m, 1} & z_{m, 2} & \cdots & z_{m, d}
+        \end{matrix}
+        \right]
+$$
+### 1.2 从最近重构性原理解释
+在得到${\bf z}$后，需要对其进行重构，重构后的样本设为
+
+$${\bf \hat{x}} = {\bf Wz} \tag{2}$$
+
+将式$(1)(2)$代入，那么对于整个数据集上的所有样本与重构后的样本之间的误差为:
+$$
+    \sum\limits_{i=1}^m||{\bf \hat{x}}_i - {\bf x}_i||_2^2 = 
+    \sum\limits_{i=1}^m||{\bf WW}^T{\bf x}_i - {\bf x}_i||_2^2 
+    \tag{3}
+$$
+根据定义，可以有：
+$$
+    {\bf WW}^T{\bf x}_i = {\bf W}({\bf W}^T{\bf x}_i) = \sum\limits_{j = 1}^d{\bf w}_j({\bf w}_j^T{\bf x}_i) \tag{4}
+$$
+由于${\bf w}_j^T{\bf x}_i$是标量，有${\bf w}_j^T{\bf x}_i = ({\bf w}_j^T{\bf x}_i)^T = {\bf x}_i^T{\bf w}_j$，从而式$(4)$变为：
+$$
+\begin{aligned}   
+    \sum\limits_{i=1}^m||{\bf \hat{x}}_i - {\bf x}_i||_2^2
+    & = \sum\limits_{i=1}^m||{\bf WW}^T{\bf x}_i - {\bf x}_i||_2^2\\
+    & = \sum\limits_{i=1}^m||\sum\limits_{i=1}^d({\bf x}_i^T{\bf w}_j){\bf w}_j - {\bf x}_i||_2^2\\
+    & = \sum\limits_{i=1}^m||{\bf x}_i - \sum\limits_{i=1}^d({\bf x}_i^T{\bf w}_j){\bf w}_j||_2^2 \tag{5}
+\end{aligned}
+$$
+
+此外，根据${\bf X}$的定义有：
+$$
+\begin{aligned}
+    ||{\bf X} - {\bf XWW}^T||_F^2 &  = \sum\limits_{i=1}^m\sum\limits_{j=1}^n\left[x_{i, j} - \left(\sum\limits_{k=1}^dw_{k, j} \times {\bf x}_i^T{\bf w}_k\right)\right]^2 \\
+    & = \sum\limits_{i = 1}^m\left|\left|{\bf x}_i - \sum\limits_{k = 1}^d({\bf x}_i^T{\bf w}_k){\bf x}_k\right|\right|_2^2 \\
+    & = \sum\limits_{i = 1}^m\left|\left|{\bf x}_i - \sum\limits_{j = 1}^d({\bf x}_i^T{\bf w}_j){\bf x}_j\right|\right|_2^2 \tag{6}
+\end{aligned}
+$$
+
+结合式$(5)(6)$可以化简优化目标：
+$$
+\begin{aligned}
+    {\bf W}^* & = \arg\min\limits_{\bf W}\sum\limits_{i = 1}^m||{\bf \hat{x}}_i - {\bf x}_i||_2^2 = \arg\min\limits_{\bf W}||{\bf X} - {\bf XWW}^T||_F^2 \\
+    & = \arg\min\limits_{\bf W} tr[({\bf X} - {\bf XWW}^T)^T({\bf X} - {\bf XWW}^T)] \\
+    &= \arg\min\limits_{\bf W}tr[{\bf X}^T{\bf X} - {\bf X}^T{\bf XWW}^T - {\bf WW}^T{\bf X}^T{\bf X} + {\bf WW}^T{\bf X}^T{\bf XWW}^T] \\
+    &= \arg\min\limits_{\bf W}[tr({\bf X}^T{\bf X}) - tr({\bf X}^T{\bf XWW}^T) - tr({\bf WW}^T{\bf X}^T{\bf X}) + tr({\bf WW}^T{\bf X}^T{\bf XWW}^T)] \\
+    &= \arg\min\limits_{\bf W}[tr({\bf X}^T{\bf X}) - tr({\bf X}^T{\bf XWW}^T) - tr({\bf X}^T{\bf XWW}^T) + tr({\bf X}^T{\bf XWW}^T{\bf WW}^T)] \\
+    &= \arg\min\limits_{\bf W}[tr({\bf X}^T{\bf X}) - tr({\bf X}^T{\bf XWW}^T) - tr({\bf X}^T{\bf XWW}^T) + tr({\bf X}^T{\bf XWW}^T)] \\
+    &= \arg\min\limits_{\bf W}[tr({\bf X}^T{\bf X}) - tr({\bf X}^T{\bf XWW}^T)] \\
+    &= \arg\min\limits_{\bf W}[- tr({\bf X}^T{\bf XWW}^T)]\\
+    &= \arg\max\limits_{\bf W}[tr({\bf X}^T{\bf XWW}^T)] \\
+    &= \arg\max\limits_{\bf W}[tr({\bf W}^T{\bf X}^T{\bf XW})] \tag{7}
+\end{aligned}
+$$
+
+从而优化目标为${\bf W}^* = \arg\max\limits_{\bf W}[tr({\bf W}^T{\bf X}^T{\bf XW})]$，约束为${\bf W}^T{\bf W} = {\bf I}_{d\times d}$
 <!-- TODO -->
+
+### 1.3 从最大可分性原理解释
+对于原始数据样本点${\bf x}_i$在降维后在新空间的超平面上的投影为${\bf W}^T{\bf x}_i$。若使样本点的投影尽可能分开，应该使样本点在投影后的方差最大化，即使下式最大化：
+$$
+\begin{aligned}
+    \arg\max\limits_{\bf W} &= \arg\max\limits_{\bf W}\sum\limits_{i=1}^m{\bf W}^T{\bf x}_i{\bf x}_i^T{\bf W}\\
+    &= \arg\max\limits_{\bf W} tr({\bf W}^T{\bf XX}^T{\bf W}) \\
+    & {\mathbf{s.t.}\ \ {\bf W}^T{W} = {\bf I}}
+    \tag{8}
+\end{aligned}
+$$
+
+**可以看到式$(7)$与$(8)$等价**。PCA的优化问题就是要求解${\bf X}^T{\bf X}$的特征值。
+
+只需将${\bf X}^T{\bf X}$进行特征值分解，将得到的特征值进行排序：$\lambda_1 \geq \lambda_2 \geq \dots \geq \lambda_n$，提取前$d$大的特征值对应的单位特征向量即可构成变化矩阵${\bf W}$。
+
 ## 2.算法的实现
 给定样本集${\bf D}=\{{\bf x}_1, {\bf x}_2, \dots, {\bf x}_m\}$和低维空间的维数$d$
 1. 对所有的样本进行中心化操作：
@@ -140,7 +258,17 @@ MNIST数据集来自美国国家标准与技术研究所(National Institute of S
 
 </center>
 
-可以看到，随着低维空间的维数提高，对于源数据的信息保留的更加全面。下面是不同维数下信噪比的记录，可以观察到**随着低维空间的维数升高，信噪比在下降**。
+可以看到，随着低维空间的维数提高，对于源数据的信息保留的更加全面。
+
+使用的信噪比的公式为:
+$$
+\begin{aligned}
+    & MSE = \frac{1}{MN}\sum\limits_{i=0}^{M-1}\sum\limits_{j=0}^{N-1}||I(i, j) - K(i, j)||^2\\
+    &PSNR = 10 \cdot \log_{10}\left(\cfrac{MAX_I^2}{MSE}\right) = 20 \cdot \log_{10}\left(\cfrac{MAX_I}{\sqrt{MSE}}\right)
+\end{aligned}
+$$
+
+下面是不同维数下信噪比的记录，可以观察到**随着低维空间的维数升高，信噪比在下降**。
 
 <center>
 
@@ -152,7 +280,10 @@ MNIST数据集来自美国国家标准与技术研究所(National Institute of S
 
 
 # 五、结论
-
+- PCA算法中舍弃了$n-d$个最小的特征值对应的特征向量，一定会导致低维空间与高维空间不同，但是通过这种方式有效提高了样本的采样密度；并且由于较小特征值对应的往往与噪声相关，通过PCA在一定程度上起到了降噪的效果。
+- PCA降低了训练数据的维度同事保留了主要信息，但在训练集上的主要信息未必是重要信息，被舍弃掉的信息未必无用，只是在训练数据上没有表现，因此PCA也有可能加重了过拟合。
+- PCA不仅将数据压缩到低维，并且将降维之后的各维特征相互独立。
+- 保留均值向量，能够通过向量减法将新样本进行中心化。
 # 六、参考文献
 - [THE MNIST DATABASE of handwritten digits](http://yann.lecun.com/exdb/mnist/)
 - [Christopher Bishop. Pattern Recognition and Machine Learning.](https://www.springer.com/us/book/9780387310732)
