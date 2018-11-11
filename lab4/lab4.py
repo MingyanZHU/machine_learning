@@ -64,7 +64,7 @@ def pca(data, reduced_dimension):
     x_mean = 1.0 / rows * np.sum(data, axis=0)
     decentralise_x = data - x_mean  # 去中心化
     cov = decentralise_x.T.dot(decentralise_x)  # 计算协方差
-    eigenvalues, feature_vectors = np.linalg.eig(cov)   # 特征值分解
+    eigenvalues, feature_vectors = np.linalg.eig(cov)  # 特征值分解
     min_d = np.argsort(eigenvalues)
     # 选取最大的特征值对应的特征向量
     feature_vectors = np.delete(feature_vectors, min_d[:columns - reduced_dimension], axis=1)
@@ -74,39 +74,54 @@ def pca(data, reduced_dimension):
 def psnr(source, target):
     """ 计算信噪比 """
     diff = source - target
-    diff = diff**2
+    diff = diff ** 2
     rmse = np.sqrt(np.mean(diff))
-    return 20 * np.log10(1.0 / rmse)
+    return 20 * np.log10(255.0 / rmse)
 
-# # 用于生成数据的测试
-# dimension = 3
-# data_number = 50
-# x = generate_data(dimension, number=data_number)
-# w, mu_x = pca(x, dimension - 1)
-# x_pca = (x - mu_x).dot(w).dot(w.T) + mu_x
-# print("Feature vectors:")
-# print(w)
-# print("Mean vector:")
-# print(mu_x)
-# draw_data(dimension, x, x_pca)
+
+def psnr_trace(x_origin):
+    """计算全部的信噪比"""
+    ans = []
+    for dim in range(1, MNIST_DIMENSION):
+        w, mu = pca(x_origin, dim)
+        x_pca = (x_origin - mu).dot(w).dot(w.T) + mu
+        temp = np.abs(np.mean([psnr(x_origin[i], x_pca[i]) for i in range(len(x_origin))]))
+        print(dim, temp)
+        ans.append(temp)
+    plt.plot(list(range(1, MNIST_DIMENSION)), ans)
+    plt.show()
+
+
+# 用于生成数据的测试
+dimension = 3
+data_number = 50
+x = generate_data(dimension, number=data_number)
+w, mu_x = pca(x, dimension - 1)
+x_pca = (x - mu_x).dot(w).dot(w.T) + mu_x
+print("Feature vectors:")
+print(w)
+print("Mean vector:")
+print(mu_x)
+draw_data(dimension, x, x_pca)
 
 # 用于mnist数据集的测试
 X_train, y_train = load_mnist('./mnist')
-d = 100
+# psnr_trace(X_train)
+d = 30
 w_mnist, mu_mnist = pca(X_train, d)
 x_pca_mnist = (X_train - mu_mnist).dot(w_mnist).dot(w_mnist.T) + mu_mnist
 print("PSNR:")
 print(np.abs(np.mean([psnr(X_train[i], x_pca_mnist[i]) for i in range(len(X_train))])))
 x_pca_show = x_pca_mnist.astype(np.int)
 fig, ax = plt.subplots(nrows=5, ncols=4, sharex='all', sharey='all')
-ax = ax.flatten() 
-for i in range(10): 
-    img = X_train[i].reshape(MNIST_HEIGHT, MNIST_WIDTH) 
-    ax[2*i].imshow(img, cmap='Greys') 
+ax = ax.flatten()
+for i in range(10):
+    img = X_train[i].reshape(MNIST_HEIGHT, MNIST_WIDTH)
+    ax[2 * i].imshow(img, cmap='Greys')
     img_compared = x_pca_show[i].reshape(MNIST_HEIGHT, MNIST_WIDTH)
-    ax[2*i+1].imshow(img_compared, cmap='Greys', interpolation='nearest')
-ax[0].set_xticks([]) 
-ax[0].set_yticks([]) 
-plt.tight_layout() 
+    ax[2 * i + 1].imshow(img_compared, cmap='Greys', interpolation='nearest')
+ax[0].set_xticks([])
+ax[0].set_yticks([])
+plt.tight_layout()
 plt.title('Dimension = ' + str(d))
 plt.show()

@@ -51,7 +51,7 @@ class KMeans(object):
             else:
                 break
 
-            print(times)
+            print("K-means", times)
             times = times + 1
             print(self.__mu)
         return self.__mu, c

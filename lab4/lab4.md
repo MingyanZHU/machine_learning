@@ -268,13 +268,10 @@ $$
 \end{aligned}
 $$
 
-下面是不同维数下信噪比的记录，可以观察到**随着低维空间的维数升高，信噪比在下降**。
-
+下面是不同维数下信噪比的记录，可以观察到**随着低维空间的维数升高，信噪比在上升**。这与“清晰程度”的变化是一致的。
 <center>
 
-|Dimension|10|20|30|60|100|
-|-|-|-|-|-|-|
-|PSNR|33.25|31.60|30.37|27.74|25.36|
+<img src="https://raw.githubusercontent.com/1160300314/Figure-for-Markdown/master/ML_lab4/psnr.png">
 
 </center>
 
