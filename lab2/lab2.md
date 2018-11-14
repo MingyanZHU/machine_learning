@@ -57,11 +57,11 @@ $$ P(Y = 0 | X) = \cfrac{1}{1 + \cfrac{P(Y=1)P(X|Y=1)}{P(Y=0)P(X|Y=0)}} = \cfrac
 
 $$ P(Y=0|X) = \cfrac{1}{1 + exp\left(ln(\dfrac{\pi}{1-\pi}) + ln\cfrac{P(X|Y=1)}{P(X|Y=0)}\right)} \tag{4}$$
 
-因为有着朴素贝叶斯的假设，我们可以讲向量各维的分布展开：
+因为有着朴素贝叶斯的假设，我们可以将向量各维的分布展开：
 
 $$ P(Y=0|X) = \cfrac{1}{1 + exp\left(ln(\dfrac{\pi}{1-\pi}) + \sum_{i}\left( ln\cfrac{P(X_i|Y=1)}{P(X_i|Y=0)} \right) \right)} \tag{5}$$
 
-另由于各个维度使符合高斯分布的，我们可以将各个维度的高斯分布函数$P(X_i|Y=y_k)= \cfrac{1}{\sigma_{ik}\sqrt{2\pi}} \ exp(\cfrac{-(x-\sigma_{ik})^2}{2\sigma_{ik}^2})$带入，可以有:
+另由于各个维度的条件概率符合高斯分布的，我们可以将各个维度的高斯分布函数$P(X_i|Y=y_k)= \cfrac{1}{\sigma_{i}\sqrt{2\pi}} \ exp(\cfrac{-(x-\mu_{ik})^2}{2\sigma_{i}^2})$带入，可以有:
 
 $$ P(Y=0|X) = \cfrac{1}{1 + exp\left(ln(\dfrac{\pi}{1-\pi}) + \sum_{i}\left( \cfrac{\mu_{i1} - \mu_{i0}}{\sigma_i^2}X_i + \cfrac{\mu_{i0}^2 - \mu_{i1}^2}{2\sigma_i^2} \right) \right)} \tag{6}$$
 
