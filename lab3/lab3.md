@@ -62,9 +62,9 @@ $$
 
 再给出混合高斯分布的定义：
 $$
-p_{\mathcal{M}}=\sum\limits_{i=1}^k\alpha_ip(\bold{x}|\bold{\mu_i}, \Sigma) \tag{3}
+p_{\mathcal{M}}=\sum\limits_{i=1}^k\alpha_ip(\bold{x}|\bold{\mu_i}, \Sigma_i) \tag{3}
 $$
-这个分布由$k$个混合成分构成，每个混合成分对应一个高斯分布。其中$\bold{\mu_i}, \Sigma$是第$k$个高斯分布的均值和协方差矩阵，$\alpha_i > 0$为相应的混合系数，满足$\sum_{i=1}^k\alpha_i = 1$。
+这个分布由$k$个混合成分构成，每个混合成分对应一个高斯分布。其中$\bold{\mu_i}, \Sigma_i$是第$i$个高斯分布的均值和协方差矩阵，$\alpha_i > 0$为相应的混合系数，满足$\sum_{i=1}^k\alpha_i = 1$。
 
 我们假设对于样本集$D$由高斯混合分布给出：首先根据$\alpha_1, \alpha_2, \dots, \alpha_k$定义的先验分布选择高斯分布混合成分，即$p(z_j = i) = \alpha_i$，其中$z_j \in \{1, 2, \dots, k\}$；然后，根据被选择的高斯混合成分的概率密度函数进行采样，从而生成相应的样本。那么根据贝叶斯定理，$z_j$的后验分布对应于：
 $$
