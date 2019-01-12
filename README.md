@@ -5,6 +5,14 @@
 
 总的来说这门课程是大学以来最**硬核**的一门课程。虽然这只是机器学习入门的非常基础的知识，但是这种利用数学工具以及对数学背后的物理含义的更深理解，是这门课给我留下的最深印象；在考前复习的时候，对很多上课时提到的问题重新梳理，有了更清晰的理解。希望以后可以继续学习相关的知识，也推荐给后来的同学这门课程。
 
+~~但是真的考炸了啊，虽然实验没炸。~~
+
+## 仓库组成
+- 实验代码 lab1~lab4
+- [课程使用的PPT](https://github.com/1160300314/machine_learning/tree/master/PPT)
+- [参考的cmu考试题目](https://github.com/1160300314/machine_learning/tree/master/exam_cmu)
+- [复习机器学习的笔记](https://github.com/1160300314/machine_learning/blob/master/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%A4%8D%E4%B9%A0%E7%AC%94%E8%AE%B0.pdf)
+
 ## lab 1 多项式拟合正弦函数
 - [x] 1. 生成数据，加入噪声；
 - [x] 2. 用高阶多项式函数拟合曲线；
