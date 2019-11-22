@@ -3,9 +3,11 @@
 
 ## Update：
 
-在正心自习的时候，看到前面的同学在看这个里面的实验报告复习，让我很担心我里面写的小错误会影响他们的考试。。。
+在正心自习的时候，偶然看到前面的同学在看这个里面的实验报告复习，让我很担心我里面写的小错误会影响他们的考试。。。
 
 请以后看这个仓库的同学，如果发现错误及时PR，**另外我的水平真的非常非常有限，请参考老师PPT、李航博士的《统计机器学习》、周志华老师的《机器学习》和Bishop的PRML来复习！**
+
+另外，发现里面公式的输入也有问题，好多不够规范，比如`argmin`的写法，就请参考[Command for argmin or argmax?](https://tex.stackexchange.com/questions/5223/command-for-argmin-or-argmax)，当时处在刚学习LaTeX没多久的情况，很多符号都是看着像什么就打的什么:new_moon_with_face::new_moon_with_face:。
 
 ----
 
